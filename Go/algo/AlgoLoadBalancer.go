@@ -4,6 +4,19 @@ import (
 	"Go/config"
 )
 
+func ChooseAlgorithm(state string) {
+	switch state {
+	case "AllFailed":
+		config.LoadBalancerDefault = Random()
+	case "ManyFailed":
+		config.LoadBalancerDefault = WeightedLeastConnection()
+	case "HighLatency":
+		config.LoadBalancerDefault = WeightedRoundRobin()
+	default:
+		config.LoadBalancerDefault = RoundRobin()
+	}
+}
+
 func AlgoLoadBalancer(algo string) string {
 	selected := ""
 	switch algo {
@@ -23,7 +36,7 @@ func AlgoLoadBalancer(algo string) string {
 		selected = Random()
 
 	default:
-		selected = ""
+		selected = RoundRobin()
 	}
 	return selected
 }

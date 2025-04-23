@@ -1,25 +1,25 @@
 package algo
 
 import (
-	"os"
+	"Go/config"
 )
 
 func AlgoLoadBalancer(algo string) string {
 	selected := ""
 	switch algo {
-	case os.Getenv("ROUND_ROBIN"):
+	case config.RoundRobinAlgo:
 		selected = RoundRobin()
 
-	case os.Getenv("LEAST_CONNECTION"):
+	case config.LeastConnectionAlgo:
 		selected = LeastConnection()
 
-	case os.Getenv("WEIGHTED_LEAST_CONNECTION"):
+	case config.WeightedLeastConnection:
 		selected = WeightedLeastConnection()
 
-	case os.Getenv("WEIGHTED_ROUND_ROBIN"):
+	case config.WeightedRoundRobin:
 		selected = WeightedRoundRobin()
 
-	case os.Getenv("RANDOM"):
+	case config.RandomAlgo:
 		selected = Random()
 
 	default:

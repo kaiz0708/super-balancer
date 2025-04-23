@@ -20,7 +20,7 @@ func updateMetricsBackend(backend string, start time.Time, resp *http.Response) 
 	UpdateMetrics(backend, latency, success, resp.StatusCode)
 }
 
-func UpdateActiveConnection(backend string, state bool) {
+func updateActiveConnection(backend string, state bool) {
 	UpdateActiveConnectionMetrics(backend, state)
 }
 
@@ -48,11 +48,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	proxy := httputil.NewSingleHostReverseProxy(url)
 	proxy.ModifyResponse = func(resp *http.Response) error {
-		UpdateActiveConnection(url.String(), false)
-		go updateMetricsBackend(target, start, resp)
+		updateActiveConnection(url.String(), false)
+		updateMetricsBackend(target, start, resp)
 		return nil
 	}
 	r.Host = url.Host
-	go UpdateActiveConnection(url.String(), true)
+	go updateActiveConnection(url.String(), true)
 	proxy.ServeHTTP(w, r)
 }

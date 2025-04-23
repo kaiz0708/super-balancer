@@ -2,9 +2,16 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"sync"
 	"time"
+)
+
+const (
+	RoundRobinAlgo          = "ROUND_ROBIN"
+	LeastConnectionAlgo     = "LEAST_CONNECTION"
+	WeightedLeastConnection = "WEIGHTED_LEAST_CONNECTION"
+	WeightedRoundRobin      = "WEIGHTED_ROUND_ROBIN"
+	RandomAlgo              = "RANDOM"
 )
 
 type Metrics struct {
@@ -24,8 +31,8 @@ type Metrics struct {
 }
 
 type BackendConfig struct {
-	UrlConfig    string
-	WeightConfig int64
+	UrlConfig    string `json:"url" validate:"required"`
+	WeightConfig int64  `json:"weight"`
 }
 
 type BackendMetrics struct {
@@ -33,17 +40,20 @@ type BackendMetrics struct {
 	Metrics *Metrics
 }
 
+type Config struct {
+	DefaultProxy string          `json:"defaultProxy" validate:"required"`
+	Algorithm    string          `json:"algorithm" validate:"required"`
+	Servers      []BackendConfig `json:"servers" validate:"required,dive"`
+}
+
 var MetricsMap = map[string]*BackendMetrics{}
 
 var LoadBalancerDefault string
 
-var BackendServers = []BackendConfig{
-	{UrlConfig: "http://localhost:3001/", WeightConfig: 1},
-	{UrlConfig: "http://localhost:3002/", WeightConfig: 5},
-}
+var BackendServers = []BackendConfig{}
 
 func InitServer() {
-	LoadBalancerDefault = os.Getenv("ROUND_ROBIN")
+	LoadBalancerDefault = RoundRobinAlgo
 	urls := BackendServers
 	fmt.Println("Default : ", LoadBalancerDefault)
 	for _, url := range urls {

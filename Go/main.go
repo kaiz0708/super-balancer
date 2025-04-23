@@ -3,16 +3,58 @@ package main
 import (
 	"Go/balancer"
 	"Go/config"
-	"net/http"
 
-	"github.com/joho/godotenv"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"net/http"
+	"os"
+
+	"github.com/go-playground/validator/v10"
 )
 
 func main() {
-	godotenv.Load()
+	defaultProxy := flag.String("defaultProxy", "", "Default proxy path")
+	algorithm := flag.String("algorithm", "", "Load balancing algorithm")
+	backends := flag.String("backends", "", "JSON array of backend servers")
+
+	fmt.Println("proxy : ", defaultProxy)
+
+	flag.Parse()
+
+	if *defaultProxy == "" || *algorithm == "" || *backends == "" {
+		fmt.Println("Missing one or more required flags")
+		os.Exit(1)
+	}
+
+	var cfg config.Config
+	cfg.DefaultProxy = *defaultProxy
+	cfg.Algorithm = *algorithm
+
+	if err := json.Unmarshal([]byte(*backends), &cfg.Servers); err != nil {
+		fmt.Println("Failed to parse backends:", err)
+		os.Exit(1)
+	}
+
+	validate := validator.New()
+	err := validate.Struct(cfg)
+	if err != nil {
+		for _, fieldErr := range err.(validator.ValidationErrors) {
+			fmt.Printf("Invalid field: %s\n", fieldErr.StructNamespace())
+		}
+		os.Exit(1)
+	}
+
+	config.BackendServers = append(config.BackendServers, cfg.Servers...)
+	config.LoadBalancerDefault = cfg.Algorithm
 	config.InitServer()
-	http.HandleFunc("/", balancer.Handler)
-	http.HandleFunc("/change-load-balancer", balancer.ChangeAlgoLoadBalancer)
-	println("Load balancer running on :8080")
-	http.ListenAndServe(":8080", nil)
+
+	http.HandleFunc(cfg.DefaultProxy, balancer.Handler)
+	http.HandleFunc(cfg.DefaultProxy+"change-load-balancer", balancer.ChangeAlgoLoadBalancer)
+	fmt.Println("🚀 Load balancer running on :8080")
+	err = http.ListenAndServe(":8080", nil)
+	if err != nil {
+		fmt.Println("❌ Server failed to start:", err)
+		os.Exit(1)
+	}
 }

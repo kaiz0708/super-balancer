@@ -5,36 +5,17 @@ import (
 	"time"
 )
 
-func CheckHealthyBackend(backend string) bool {
-	target := config.MetricsMap[backend]
-
-	failRate := float64(target.Metrics.FailureCount) / float64(target.Metrics.RequestCount+1)
-
-	return target.Metrics.ConsecutiveFails >= 5 ||
-		failRate > 0.5 ||
-		target.Metrics.AvgLatency > 500*time.Millisecond
-}
-
 func AnalyzeSystemState(target string) string {
-	checkHealthy := CheckHealthyBackend(target)
-	config.MetricsMap[target].Mutex.Lock()
-	defer config.MetricsMap[target].Mutex.Unlock()
-	if checkHealthy {
-		config.MetricsMap[target].Metrics.IsHealthy = false
-	} else {
-		config.MetricsMap[target].Metrics.IsHealthy = true
-	}
-
 	backends := config.MetricsMap
 	healthyCount := 0
 	highLatencyCount := 0
 	totalBackends := len(backends)
 
 	for _, backend := range backends {
-		if backend.Metrics.IsHealthy && backend.Metrics.ConsecutiveFails < 3 {
+		if backend.Metrics.IsHealthy && backend.Metrics.ConsecutiveFails <= 5 {
 			healthyCount++
 		}
-		if backend.Metrics.LastLatency > 500*time.Millisecond || backend.Metrics.AvgLatency > 500*time.Millisecond {
+		if backend.Metrics.LastLatency >= 500*time.Millisecond || backend.Metrics.AvgLatency >= 500*time.Millisecond {
 			highLatencyCount++
 		}
 	}

@@ -27,20 +27,28 @@ func UpdateMetrics(backend string, latency time.Duration, success bool, status i
 	m.LastChecked = time.Now()
 	m.LastStatus = status
 
+	if m.RequestCount > 0 {
+		m.AvgLatency = m.TotalLatency / time.Duration(m.RequestCount)
+	}
+
 	if success {
 		m.SuccessCount++
+		if m.ConsecutiveFails >= 5 {
+			m.AvgLatency = 0
+			m.TotalLatency = 0
+			m.RequestCount = 0
+			m.FailureCount = 0
+		}
 		m.ConsecutiveFails = 0
 		m.IsHealthy = true
 	} else {
 		m.FailureCount++
 		m.ConsecutiveFails++
-		if m.ConsecutiveFails >= 3 {
-			m.IsHealthy = false
-		}
 	}
 
-	if m.RequestCount > 0 {
-		m.AvgLatency = m.TotalLatency / time.Duration(m.RequestCount)
+	failRate := float64(m.FailureCount) / float64(m.RequestCount)
+	if m.ConsecutiveFails >= 5 || failRate >= 0.5 || m.AvgLatency >= 500*time.Millisecond {
+		m.IsHealthy = false
 	}
 
 	countRequestLock.Lock()

@@ -2,6 +2,7 @@ package balancer
 
 import (
 	"Go/config"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -48,8 +49,17 @@ func UpdateMetrics(backend string, latency time.Duration, success bool, status i
 
 	if totalRequests%updateEvery == 0 {
 		clearTerminal()
-		logMetrics()
+		logInforBackend()
 	}
+}
+
+func ResetMetricsAfterHealthy() {
+
+}
+
+func logInforBackend() {
+	data, _ := json.Marshal(config.MetricsMap)
+	fmt.Println(string(data))
 }
 
 func UpdateActiveConnectionMetrics(backend string, state bool) {
@@ -71,34 +81,6 @@ func clearTerminal() {
 		cmd.Stdout = os.Stdout
 		cmd.Run()
 	default:
-		fmt.Print("\033[2J\033[H") // ANSI escape code to clear screen
-	}
-}
-
-func logMetrics() {
-	fmt.Println("======== Backend Metrics ========")
-	for backend, m := range config.MetricsMap {
-		if _, ok := config.MetricsMap[backend]; ok {
-			target := m.Metrics
-			successRate := float64(target.SuccessCount) / float64(target.RequestCount)
-			errorRate := float64(target.FailureCount) / float64(target.RequestCount)
-			avgLatencyMs := float64(target.AvgLatency.Microseconds()) / 1000.0
-			lastLatencyMs := float64(target.LastLatency.Microseconds()) / 1000.0
-			fmt.Printf("Backend: %s\n", backend)
-			fmt.Printf("  - Requests:        %d\n", target.RequestCount)
-			fmt.Printf("  - Successes:       %d\n", target.SuccessCount)
-			fmt.Printf("  - Failures:        %d\n", target.FailureCount)
-			fmt.Printf("  - Success Rate:    %.2f%%\n", successRate*100)
-			fmt.Printf("  - Error Rate:      %.2f%%\n", errorRate*100)
-			fmt.Printf("  - Avg Latency:     %.2f ms\n", avgLatencyMs)
-			fmt.Printf("  - Last Latency:    %.2f ms\n", lastLatencyMs)
-			fmt.Printf("  - Healthy:         %v\n", target.IsHealthy)
-			fmt.Printf("  - Last Status:     %d\n", target.LastStatus)
-			fmt.Printf("  - Last Checked:    %s\n", target.LastChecked.Format(time.RFC3339))
-			fmt.Printf("  - ActiveConnection:%d\n", target.ActiveConnections)
-			fmt.Printf("  - Weight:        	 %d\n", target.Weight)
-			fmt.Printf("  - CurrentWeight:   %d\n", target.CurrentWeight)
-			fmt.Println("---------------------------------------")
-		}
+		fmt.Print("\033[2J\033[H")
 	}
 }

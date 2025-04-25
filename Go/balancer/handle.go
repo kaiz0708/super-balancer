@@ -2,6 +2,7 @@ package balancer
 
 import (
 	"Go/algo"
+	"Go/algo/custom"
 	"Go/config"
 	"encoding/json"
 	"net/http"
@@ -32,37 +33,6 @@ func ChangeAlgoLoadBalancer(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func TestRequest(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func analyzeSystemState() string {
-	backends := config.MetricsMap
-	healthyCount := 0
-	highLatencyCount := 0
-	totalBackends := len(backends)
-
-	for _, backend := range backends {
-		if backend.Metrics.IsHealthy && backend.Metrics.ConsecutiveFails < 3 {
-			healthyCount++
-		}
-		if backend.Metrics.LastLatency > 500*time.Millisecond || backend.Metrics.AvgLatency > 500*time.Millisecond {
-			highLatencyCount++
-		}
-	}
-
-	if healthyCount == 0 {
-		return "AllFailed"
-	}
-	if float64(healthyCount)/float64(totalBackends) < 0.5 {
-		return "ManyFailed"
-	}
-	if highLatencyCount > 1 {
-		return "HighLatency"
-	}
-	return "Stable"
-}
-
 func Handler(w http.ResponseWriter, r *http.Request) {
 	algoChoice := config.LoadBalancerDefault
 	target := algo.AlgoLoadBalancer(algoChoice)
@@ -78,11 +48,15 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	proxy := httputil.NewSingleHostReverseProxy(url)
 	proxy.ModifyResponse = func(resp *http.Response) error {
 		go func() {
-			pickState := analyzeSystemState()
-			algo.ChooseAlgorithm(pickState)
+			pickState := AnalyzeSystemState(url.String())
+			if pickState == "AllFailed" {
+				custom.CustomAllFailed(w)
+			} else {
+				algo.ChooseAlgorithm(pickState)
+			}
 		}()
 		go updateActiveConnection(url.String(), false)
-		updateMetricsBackend(target, start, resp)
+		go updateMetricsBackend(target, start, resp)
 		return nil
 	}
 	r.Host = url.Host

@@ -1,19 +1,19 @@
 package algo
 
 import (
+	"Go/algo/custom"
+	algo_default "Go/algo/defaults"
 	"Go/config"
 )
 
 func ChooseAlgorithm(state string) {
 	switch state {
-	case "AllFailed":
-		config.LoadBalancerDefault = Random()
 	case "ManyFailed":
-		config.LoadBalancerDefault = WeightedLeastConnection()
+		config.LoadBalancerDefault = custom.CustomManyFailed()
 	case "HighLatency":
-		config.LoadBalancerDefault = WeightedRoundRobin()
+		config.LoadBalancerDefault = custom.CustomHighLatency()
 	default:
-		config.LoadBalancerDefault = RoundRobin()
+		config.LoadBalancerDefault = algo_default.WeightedRoundRobin()
 	}
 }
 
@@ -21,22 +21,22 @@ func AlgoLoadBalancer(algo string) string {
 	selected := ""
 	switch algo {
 	case config.RoundRobinAlgo:
-		selected = RoundRobin()
+		selected = algo_default.RoundRobin()
 
 	case config.LeastConnectionAlgo:
-		selected = LeastConnection()
+		selected = algo_default.LeastConnection()
 
 	case config.WeightedLeastConnection:
-		selected = WeightedLeastConnection()
+		selected = algo_default.WeightedLeastConnection()
 
 	case config.WeightedRoundRobin:
-		selected = WeightedRoundRobin()
+		selected = algo_default.WeightedRoundRobin()
 
 	case config.RandomAlgo:
-		selected = Random()
+		selected = algo_default.Random()
 
 	default:
-		selected = RoundRobin()
+		selected = algo_default.RoundRobin()
 	}
 	return selected
 }

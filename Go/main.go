@@ -1,9 +1,9 @@
 package main
 
 import (
+	test "Go/TestRequest"
 	"Go/balancer"
 	"Go/config"
-
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -51,7 +51,7 @@ func main() {
 
 	http.HandleFunc(cfg.DefaultProxy, balancer.Handler)
 	http.HandleFunc(cfg.DefaultProxy+"change-load-balancer", balancer.ChangeAlgoLoadBalancer)
-	fmt.Println("🚀 Load balancer running on :8080")
+	http.HandleFunc(cfg.DefaultProxy+"test", test.SpamRequests)
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println("❌ Server failed to start:", err)

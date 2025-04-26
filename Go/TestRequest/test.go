@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 func CallRequest(id int) {
@@ -19,11 +21,11 @@ func CallRequest(id int) {
 	fmt.Printf("Request %d trả về status: %s\n", id, resp.Status)
 }
 
-func SpamRequests(w http.ResponseWriter, r *http.Request) {
-	quantityStr := r.URL.Query().Get("quantity")
+func SpamRequests(c *gin.Context) {
+	quantityStr := c.DefaultQuery("quantity", "0")
 	num, err := strconv.Atoi(quantityStr)
 	if err != nil || num <= 0 {
-		http.Error(w, "Số lượng không hợp lệ", http.StatusBadRequest)
+		c.JSON(400, gin.H{"error": "Số lượng không hợp lệ"})
 		return
 	}
 
@@ -48,5 +50,5 @@ func SpamRequests(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wg.Wait()
-	fmt.Fprintln(w, "Đã gửi xong", num, "request!")
+	c.JSON(200, gin.H{"message": fmt.Sprintf("Đã gửi xong %d request!", num)})
 }

@@ -9,7 +9,6 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -29,9 +28,6 @@ func main() {
 		panic(err)
 	}
 	r.StaticFS("/static", http.FS(subFS))
-	r.GET("/", func(c *gin.Context) {
-		c.FileFromFS("index.html", http.FS(subFS))
-	})
 
 	r.POST("/api/backends", func(c *gin.Context) {
 		var servers []config.BackendConfig
@@ -49,7 +45,8 @@ func main() {
 			config.BackendServers = append(config.BackendServers, server)
 			config.MetricsMap[server.UrlConfig] = &config.BackendMetrics{
 				Metrics: &config.Metrics{
-					Weight: server.WeightConfig,
+					Weight:    server.WeightConfig,
+					IsHealthy: true,
 				},
 			}
 		}
@@ -69,16 +66,7 @@ func main() {
 			if metric.Metrics.RequestCount > 0 {
 				failureRate = float64(metric.Metrics.FailureCount) / float64(metric.Metrics.RequestCount)
 			}
-			parts := strings.Split(server.UrlConfig, ":")
-			host, port := "", ""
-			if len(parts) == 2 {
-				host, port = parts[0], parts[1]
-			} else {
-				host = server.UrlConfig
-			}
 			backends = append(backends, map[string]interface{}{
-				"host":              host,
-				"port":              port,
 				"url":               server.UrlConfig,
 				"healthy":           metric.Metrics.IsHealthy,
 				"avgLatency":        metric.Metrics.AvgLatency.Milliseconds(),
@@ -118,11 +106,16 @@ func main() {
 		balancer.Handler(c.Writer, c.Request)
 	})
 
-	r.POST("/"+"change-load-balancer", func(c *gin.Context) {
+	r.POST("/change-load-balancer", func(c *gin.Context) {
 		balancer.ChangeAlgoLoadBalancer(c.Writer, c.Request)
 	})
-	r.GET("/"+"test", func(c *gin.Context) {
-		test.SpamRequests(c.Writer, c.Request)
+
+	r.GET("/test", func(c *gin.Context) {
+		test.SpamRequests(c)
+	})
+
+	r.GET("/favicon.ico", func(c *gin.Context) {
+		c.Status(http.StatusNotFound)
 	})
 
 	fmt.Println("🚀 Server running on :8080")

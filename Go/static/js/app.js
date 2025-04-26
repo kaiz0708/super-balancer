@@ -1,47 +1,82 @@
 let servers = [];
 
 function addServer() {
-    const urlInput = document.getElementById('urlInput').value.trim();
-    const weightInput = document.getElementById('weightInput').value.trim();
-    const status = document.getElementById('status');
+    const url = document.getElementById('urlInput').value;
+    const weight = document.getElementById('weightInput').value;
+    const statusElement = document.getElementById('status');
 
-    // Validate inputs
-    if (!urlInput || !weightInput) {
-        status.textContent = 'Please enter both URL and weight.';
-        status.className = 'text-red-500';
-        return;
-    }
-    if (!urlInput.startsWith('http://') && !urlInput.startsWith('https://')) {
-        status.textContent = 'URL must start with http:// or https://';
-        status.className = 'text-red-500';
-        return;
-    }
-    const weight = parseInt(weightInput);
-    if (isNaN(weight) || weight <= 0) {
-        status.textContent = 'Weight must be a positive number.';
-        status.className = 'text-red-500';
+    if (!url || !weight) {
+        statusElement.textContent = 'Please fill in both URL and Weight.';
+        statusElement.className = 'mt-4 text-center text-sm text-red-500';
         return;
     }
 
-    // Add server to list
-    servers.push({ url: urlInput, weight });
+    const server = {
+        url: url,
+        healthy: true,
+        avgLatency: 0,
+        requestCount: 0,
+        failureRate: 0,
+        weight: parseInt(weight),
+        activeConnections: 0
+    };
+
+    servers.push(server);
     updateServerList();
-
-    // Clear inputs and show success
+    
+    // Clear inputs
     document.getElementById('urlInput').value = '';
     document.getElementById('weightInput').value = '';
-    status.textContent = 'Server added to list!';
-    status.className = 'text-green-500';
+    statusElement.textContent = 'Server added successfully!';
+    statusElement.className = 'mt-4 text-center text-sm text-green-500';
 }
 
 function updateServerList() {
     const serverListItems = document.getElementById('serverListItems');
     serverListItems.innerHTML = '';
-    servers.forEach((server, index) => {
-        const li = document.createElement('li');
-        li.textContent = `URL: ${server.url}, Weight: ${server.weight}`;
-        serverListItems.appendChild(li);
+
+    servers.forEach(server => {
+        const row = document.createElement('tr');
+        row.className = 'border-t border-gray-200';
+        row.innerHTML = `
+            <td class="p-3">${server.url}</td>
+            <td class="p-3">
+                <span class="${server.healthy ? 'text-green-500' : 'text-red-500'} font-medium">
+                    ${server.healthy ? 'Healthy' : 'Unhealthy'}
+                </span>
+            </td>
+            <td class="p-3">${server.avgLatency}</td>
+            <td class="p-3">${server.requestCount}</td>
+            <td class="p-3">${server.failureRate}</td>
+            <td class="p-3">${server.weight}</td>
+            <td class="p-3">${server.activeConnections}</td>
+        `;
+        serverListItems.appendChild(row);
     });
+}
+
+function getServers() {
+    const statusElement = document.getElementById('status');
+    statusElement.textContent = 'Fetching servers...';
+    statusElement.className = 'mt-4 text-center text-sm text-blue-500';
+
+    fetch('http://localhost:8080/api/backends')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch servers');
+            }
+            return response.json();
+        })
+        .then(data => {
+            servers = data.backends;
+            updateServerList();
+            statusElement.textContent = `Fetched ${servers.length} servers successfully!`;
+            statusElement.className = 'mt-4 text-center text-sm text-green-500';
+        })
+        .catch(error => {
+            statusElement.textContent = `Error: ${error.message}`;
+            statusElement.className = 'mt-4 text-center text-sm text-red-500';
+        });
 }
 
 async function submitServers() {
@@ -66,7 +101,7 @@ async function submitServers() {
         if (response.ok) {
             status.textContent = result.message || 'Backends added successfully!';
             status.className = 'text-green-500';
-            servers = []; // Clear the list
+            servers = []; 
             updateServerList();
         } else {
             status.textContent = result.error || 'Failed to add backends.';

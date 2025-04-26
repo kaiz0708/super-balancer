@@ -15,6 +15,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+//go:embed static/*
 var staticFiles embed.FS
 
 func main() {
@@ -23,10 +24,13 @@ func main() {
 
 	r := gin.Default()
 
-	subFS, _ := fs.Sub(staticFiles, "static")
+	subFS, err := fs.Sub(staticFiles, "static")
+	if err != nil {
+		panic(err)
+	}
 	r.StaticFS("/static", http.FS(subFS))
 	r.GET("/", func(c *gin.Context) {
-		c.FileFromFS("/static/index.html", http.FS(subFS))
+		c.FileFromFS("index.html", http.FS(subFS))
 	})
 
 	r.POST("/api/backends", func(c *gin.Context) {

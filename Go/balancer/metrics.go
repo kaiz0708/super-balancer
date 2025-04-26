@@ -61,10 +61,6 @@ func UpdateMetrics(backend string, latency time.Duration, success bool, status i
 	}
 }
 
-func ResetMetricsAfterHealthy() {
-
-}
-
 func logInforBackend() {
 	data, _ := json.Marshal(config.MetricsMap)
 	fmt.Println(string(data))

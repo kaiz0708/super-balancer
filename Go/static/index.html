@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Config Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-4 text-center">Add Backend Servers</h1>
+        
+        <!-- Form to add a single server -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">URL</label>
+            <input type="text" id="urlInput" placeholder="e.g. http://server1.com" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+        </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Weight</label>
+            <input type="number" id="weightInput" placeholder="e.g. 10" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+        </div>
+        <button onclick="addServer()" class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 mb-4">Add to List</button>
+        
+        <!-- Server list -->
+        <div id="serverList" class="mb-4">
+            <h2 class="text-lg font-semibold">Server List</h2>
+            <ul id="serverListItems" class="list-disc pl-5"></ul>
+        </div>
+        
+        <!-- Submit button -->
+        <button onclick="submitServers()" class="w-full bg-green-500 text-white p-2 rounded-md hover:bg-green-600">Submit All Servers</button>
+        
+        <!-- Status message -->
+        <p id="status" class="mt-4 text-center text-sm"></p>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

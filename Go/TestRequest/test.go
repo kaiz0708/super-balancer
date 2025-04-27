@@ -1,14 +1,13 @@
 package test
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 func CallRequest(id int) {
@@ -21,15 +20,22 @@ func CallRequest(id int) {
 	fmt.Printf("Request %d trả về status: %s\n", id, resp.Status)
 }
 
-func SpamRequests(c *gin.Context) {
-	quantityStr := c.DefaultQuery("quantity", "0")
+const (
+	maxConcurrency = 20
+	minDelay       = 400
+	maxExtraDelay  = 200
+)
+
+func SpamRequests(w http.ResponseWriter, r *http.Request) {
+	quantityStr := r.URL.Query().Get("quantity")
 	num, err := strconv.Atoi(quantityStr)
 	if err != nil || num <= 0 {
-		c.JSON(400, gin.H{"error": "Số lượng không hợp lệ"})
+		// Trả về JSON với lỗi nếu quantity không hợp lệ
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, `{"error": "Invalid Quantity"}`, http.StatusBadRequest)
 		return
 	}
 
-	const maxConcurrency = 20
 	sem := make(chan struct{}, maxConcurrency)
 	var wg sync.WaitGroup
 
@@ -43,12 +49,16 @@ func SpamRequests(c *gin.Context) {
 			defer wg.Done()
 			CallRequest(id)
 
-			time.Sleep(time.Duration(10+rand.Intn(20)) * time.Millisecond)
+			time.Sleep(time.Duration(minDelay+rand.Intn(maxExtraDelay)) * time.Millisecond)
 
 			<-sem
 		}(i)
 	}
 
 	wg.Wait()
-	c.JSON(200, gin.H{"message": fmt.Sprintf("Đã gửi xong %d request!", num)})
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]interface{}{
+		"message": fmt.Sprintf("Đã gửi xong %d request!", num),
+	}
+	json.NewEncoder(w).Encode(response)
 }

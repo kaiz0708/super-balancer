@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -55,7 +54,6 @@ var BackendServers = []BackendConfig{}
 func InitServer() {
 	LoadBalancerDefault = RoundRobinAlgo
 	urls := BackendServers
-	fmt.Println("Default : ", LoadBalancerDefault)
 	for _, url := range urls {
 		MetricsMap[url.UrlConfig] = &BackendMetrics{
 			Metrics: &Metrics{

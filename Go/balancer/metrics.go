@@ -12,9 +12,9 @@ import (
 )
 
 var countRequestLock sync.Mutex
-var totalRequests uint64 = 0
+var TotalRequests uint64 = 0
 
-const updateEvery = 1
+const updateEvery = 100
 
 func UpdateMetrics(backend string, latency time.Duration, success bool, status int) {
 	backendMetric := config.MetricsMap[backend]
@@ -52,10 +52,10 @@ func UpdateMetrics(backend string, latency time.Duration, success bool, status i
 	}
 
 	countRequestLock.Lock()
-	totalRequests++
+	TotalRequests++
 	countRequestLock.Unlock()
 
-	if totalRequests%updateEvery == 0 {
+	if TotalRequests%updateEvery == 0 {
 		clearTerminal()
 		logInforBackend()
 	}

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func AnalyzeSystemState(target string) string {
+func AnalyzeSystemState() string {
 	backends := config.MetricsMap
 	healthyCount := 0
 	highLatencyCount := 0
@@ -23,7 +23,7 @@ func AnalyzeSystemState(target string) string {
 	if healthyCount == 0 {
 		return "AllFailed"
 	}
-	if float64(healthyCount)/float64(totalBackends) < 0.5 {
+	if float64(healthyCount)/float64(totalBackends) <= 0.5 {
 		return "ManyFailed"
 	}
 	if highLatencyCount > 1 {

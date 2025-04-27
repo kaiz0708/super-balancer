@@ -5,7 +5,6 @@ import (
 	"Go/algo/custom"
 	"Go/config"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -35,8 +34,14 @@ func ChangeAlgoLoadBalancer(w http.ResponseWriter, r *http.Request) {
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	algoChoice := config.LoadBalancerDefault
-	target := algo.AlgoLoadBalancer(algoChoice)
+	target := ""
+	pickState := AnalyzeSystemState()
+
+	if pickState == "AllFailed" {
+		custom.CustomAllFailed(w)
+	} else {
+		target = algo.ChooseAlgorithm(pickState)
+	}
 
 	url, err := url.Parse(target)
 
@@ -47,14 +52,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	start := time.Now()
 	proxy := httputil.NewSingleHostReverseProxy(url)
-	go func() {
-		pickState := AnalyzeSystemState(url.String())
-		if pickState == "AllFailed" {
-			custom.CustomAllFailed(w)
-		} else {
-			algo.ChooseAlgorithm(pickState)
-		}
-	}()
+
 	proxy.ModifyResponse = func(resp *http.Response) error {
 		go updateActiveConnection(url.String(), false)
 		go updateMetricsBackend(target, start, resp.StatusCode)
@@ -62,12 +60,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		fmt.Println("proxy error:", err)
 		go updateActiveConnection(url.String(), false)
 		go updateMetricsBackend(target, start, 502)
 	}
 
 	r.Host = url.Host
-	go updateActiveConnection(url.String(), true)
+	updateActiveConnection(url.String(), true)
 	proxy.ServeHTTP(w, r)
 }

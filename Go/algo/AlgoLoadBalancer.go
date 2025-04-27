@@ -6,15 +6,22 @@ import (
 	"Go/config"
 )
 
-func ChooseAlgorithm(state string) {
+var AlgoCurrent string
+
+func ChooseAlgorithm(state string) string {
+	selected := ""
 	switch state {
 	case "ManyFailed":
-		config.LoadBalancerDefault = custom.CustomManyFailed()
+		AlgoCurrent = "ManyFailed"
+		selected = custom.CustomManyFailed()
 	case "HighLatency":
-		config.LoadBalancerDefault = custom.CustomHighLatency()
+		AlgoCurrent = "HighLatency"
+		selected = custom.CustomHighLatency()
 	default:
-		config.LoadBalancerDefault = algo_default.WeightedRoundRobin()
+		AlgoCurrent = config.LoadBalancerDefault
+		selected = AlgoLoadBalancer(config.LoadBalancerDefault)
 	}
+	return selected
 }
 
 func AlgoLoadBalancer(algo string) string {

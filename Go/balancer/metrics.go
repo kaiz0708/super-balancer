@@ -1,6 +1,7 @@
 package balancer
 
 import (
+	"Go/algo"
 	"Go/config"
 	"encoding/json"
 	"fmt"
@@ -58,12 +59,13 @@ func UpdateMetrics(backend string, latency time.Duration, success bool, status i
 	if TotalRequests%updateEvery == 0 {
 		clearTerminal()
 		logInforBackend()
+		fmt.Println("Algo current : ", algo.AlgoCurrent)
 	}
 }
 
 func logInforBackend() {
 	data, _ := json.Marshal(config.MetricsMap)
-	fmt.Println(string(data))
+	fmt.Println("Log backends infor : ", string(data))
 }
 
 func UpdateActiveConnectionMetrics(backend string, state bool) {

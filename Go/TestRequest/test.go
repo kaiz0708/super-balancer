@@ -17,7 +17,6 @@ func CallRequest(id int) {
 		return
 	}
 	defer resp.Body.Close()
-	fmt.Printf("Request %d trả về status: %s\n", id, resp.Status)
 }
 
 const (
@@ -30,7 +29,6 @@ func SpamRequests(w http.ResponseWriter, r *http.Request) {
 	quantityStr := r.URL.Query().Get("quantity")
 	num, err := strconv.Atoi(quantityStr)
 	if err != nil || num <= 0 {
-		// Trả về JSON với lỗi nếu quantity không hợp lệ
 		w.Header().Set("Content-Type", "application/json")
 		http.Error(w, `{"error": "Invalid Quantity"}`, http.StatusBadRequest)
 		return

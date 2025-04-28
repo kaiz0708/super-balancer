@@ -29,7 +29,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	consecutiveFailsValue, err := strconv.ParseFloat(*consecutiveFails, 64)
+	consecutiveFailsValue, err := strconv.ParseUint(*consecutiveFails, 10, 64)
 	if err != nil {
 		fmt.Println("Lỗi chuyển đổi:", err)
 		return

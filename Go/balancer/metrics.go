@@ -34,7 +34,7 @@ func UpdateMetrics(backend string, latency time.Duration, success bool, status i
 
 	if success {
 		m.SuccessCount++
-		if m.ConsecutiveFails >= 5 {
+		if m.ConsecutiveFails >= config.ConsecutiveFails {
 			m.AvgLatency = 0
 			m.TotalLatency = 0
 			m.RequestCount = 0

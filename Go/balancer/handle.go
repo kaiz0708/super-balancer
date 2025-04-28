@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func updateMetricsBackend(backend string, start time.Time, statusCode int) {
+func UpdateMetricsBackend(backend string, start time.Time, statusCode int) {
 	latency := time.Since(start)
 	success := true
 	if statusCode == 502 {
@@ -20,8 +20,45 @@ func updateMetricsBackend(backend string, start time.Time, statusCode int) {
 	UpdateMetrics(backend, latency, success, statusCode)
 }
 
-func updateActiveConnection(backend string, state bool) {
+func UpdateActiveConnection(backend string, state bool) {
 	UpdateActiveConnectionMetrics(backend, state)
+}
+
+func CheckUnhealthyBackend(w http.ResponseWriter, r *http.Request) {
+	backends := config.MetricsMap
+
+	for backend, m := range backends {
+		if !m.Metrics.IsHealthy {
+			HttpProxy(backend, w, r)
+		}
+	}
+}
+
+func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
+	url, err := url.Parse(backend)
+
+	if err != nil {
+		http.Error(w, "Invalid backend URL", http.StatusInternalServerError)
+		return
+	}
+
+	start := time.Now()
+	proxy := httputil.NewSingleHostReverseProxy(url)
+
+	proxy.ModifyResponse = func(resp *http.Response) error {
+		go UpdateActiveConnection(url.String(), false)
+		go UpdateMetricsBackend(backend, start, resp.StatusCode)
+		return nil
+	}
+
+	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		go UpdateActiveConnection(url.String(), false)
+		go UpdateMetricsBackend(backend, start, 502)
+	}
+
+	r.Host = url.Host
+	UpdateActiveConnection(url.String(), true)
+	proxy.ServeHTTP(w, r)
 }
 
 func ChangeAlgoLoadBalancer(w http.ResponseWriter, r *http.Request) {
@@ -42,29 +79,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		target = algo.ChooseAlgorithm(pickState)
 	}
-
-	url, err := url.Parse(target)
-
-	if err != nil {
-		http.Error(w, "Invalid backend URL", http.StatusInternalServerError)
-		return
-	}
-
-	start := time.Now()
-	proxy := httputil.NewSingleHostReverseProxy(url)
-
-	proxy.ModifyResponse = func(resp *http.Response) error {
-		go updateActiveConnection(url.String(), false)
-		go updateMetricsBackend(target, start, resp.StatusCode)
-		return nil
-	}
-
-	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		go updateActiveConnection(url.String(), false)
-		go updateMetricsBackend(target, start, 502)
-	}
-
-	r.Host = url.Host
-	updateActiveConnection(url.String(), true)
-	proxy.ServeHTTP(w, r)
+	go CheckUnhealthyBackend(w, r)
+	HttpProxy(target, w, r)
 }

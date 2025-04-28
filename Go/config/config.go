@@ -21,7 +21,7 @@ type Metrics struct {
 	LastLatency       time.Duration
 	AvgLatency        time.Duration
 	LastChecked       time.Time
-	ConsecutiveFails  uint64
+	ConsecutiveFails  float64
 	IsHealthy         bool
 	LastStatus        int
 	ActiveConnections int64
@@ -48,6 +48,10 @@ type Config struct {
 var MetricsMap = map[string]*BackendMetrics{}
 
 var LoadBalancerDefault string
+
+var ConsecutiveFails float64
+
+var FailRate float64
 
 var BackendServers = []BackendConfig{}
 

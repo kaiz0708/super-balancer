@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -18,12 +19,26 @@ func main() {
 	defaultProxy := flag.String("defaultProxy", "", "Default proxy path")
 	algorithm := flag.String("algorithm", "", "Load balancing algorithm")
 	backends := flag.String("backends", "", "JSON array of backend servers")
+	consecutiveFails := flag.String("consecutiveFails", "", "Set up amount consecutiveFails")
+	failRate := flag.String("failRate", "", "Set up rate fail")
 
 	flag.Parse()
 
-	if *defaultProxy == "" || *algorithm == "" || *backends == "" {
+	if *defaultProxy == "" || *algorithm == "" || *backends == "" || *consecutiveFails == "" || *failRate == "" {
 		fmt.Println("Missing one or more required flags")
 		os.Exit(1)
+	}
+
+	consecutiveFailsValue, err := strconv.ParseFloat(*consecutiveFails, 64)
+	if err != nil {
+		fmt.Println("Lỗi chuyển đổi:", err)
+		return
+	}
+
+	faileRateValue, err := strconv.ParseFloat(*failRate, 64)
+	if err != nil {
+		fmt.Println("Lỗi chuyển đổi:", err)
+		return
 	}
 
 	var cfg config.Config
@@ -36,7 +51,7 @@ func main() {
 	}
 
 	validate := validator.New()
-	err := validate.Struct(cfg)
+	err = validate.Struct(cfg)
 	if err != nil {
 		for _, fieldErr := range err.(validator.ValidationErrors) {
 			fmt.Printf("Invalid field: %s\n", fieldErr.StructNamespace())
@@ -46,6 +61,12 @@ func main() {
 
 	config.BackendServers = append(config.BackendServers, cfg.Servers...)
 	config.LoadBalancerDefault = cfg.Algorithm
+	config.ConsecutiveFails = consecutiveFailsValue
+	config.FailRate = faileRateValue
+	if err != nil {
+		fmt.Println("Lỗi chuyển đổi:", err)
+		return
+	}
 	config.InitServer()
 
 	http.HandleFunc(cfg.DefaultProxy, balancer.Handler)

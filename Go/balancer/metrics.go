@@ -5,9 +5,6 @@ import (
 	"Go/config"
 	"encoding/json"
 	"fmt"
-	"os"
-	"os/exec"
-	"runtime"
 	"sync"
 	"time"
 )
@@ -22,14 +19,16 @@ func UpdateMetrics(backend string, latency time.Duration, success bool, status i
 	backendMetric.Mutex.Lock()
 	defer backendMetric.Mutex.Unlock()
 	m := backendMetric.Metrics
-	m.RequestCount++
-	m.TotalLatency += latency
-	m.LastLatency = latency
-	m.LastChecked = time.Now()
-	m.LastStatus = status
+	if m.IsHealthy {
+		m.RequestCount++
+		m.TotalLatency += latency
+		m.LastLatency = latency
+		m.LastChecked = time.Now()
+		m.LastStatus = status
 
-	if m.RequestCount > 0 {
-		m.AvgLatency = m.TotalLatency / time.Duration(m.RequestCount)
+		if m.RequestCount > 0 {
+			m.AvgLatency = m.TotalLatency / time.Duration(m.RequestCount)
+		}
 	}
 
 	if success {
@@ -58,7 +57,6 @@ func UpdateMetrics(backend string, latency time.Duration, success bool, status i
 	countRequestLock.Unlock()
 
 	if TotalRequests%updateEvery == 0 {
-		clearTerminal()
 		logInforBackend()
 		fmt.Println("Algo current : ", algo.AlgoCurrent)
 	}
@@ -78,16 +76,5 @@ func UpdateActiveConnectionMetrics(backend string, state bool) {
 		m.ActiveConnections++
 	} else {
 		m.ActiveConnections--
-	}
-}
-
-func clearTerminal() {
-	switch runtime.GOOS {
-	case "windows":
-		cmd := exec.Command("cmd", "/c", "cls")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	default:
-		fmt.Print("\033[2J\033[H")
 	}
 }

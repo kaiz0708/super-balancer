@@ -29,7 +29,15 @@ func CheckUnhealthyBackend(w http.ResponseWriter, r *http.Request) {
 
 	for backend, m := range backends {
 		if !m.Metrics.IsHealthy {
-			HttpProxy(backend, w, r)
+			url, _ := url.Parse(backend)
+			start := time.Now()
+			proxy := httputil.NewSingleHostReverseProxy(url)
+			proxy.ModifyResponse = func(resp *http.Response) error {
+				UpdateMetricsBackend(backend, start, resp.StatusCode)
+				return nil
+			}
+			r.Host = url.Host
+			proxy.ServeHTTP(w, r)
 		}
 	}
 }

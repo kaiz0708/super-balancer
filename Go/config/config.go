@@ -53,6 +53,8 @@ var ConsecutiveFails uint64
 
 var FailRate float64
 
+var Fallback string
+
 var BackendServers = []BackendConfig{}
 
 func InitServer() {

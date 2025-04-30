@@ -21,6 +21,7 @@ func main() {
 	backends := flag.String("backends", "", "JSON array of backend servers")
 	consecutiveFails := flag.String("consecutiveFails", "", "Set up amount consecutiveFails")
 	failRate := flag.String("failRate", "", "Set up rate fail")
+	fallback := flag.String("fallback", "", "Set up fallback")
 
 	flag.Parse()
 
@@ -63,6 +64,7 @@ func main() {
 	config.LoadBalancerDefault = cfg.Algorithm
 	config.ConsecutiveFails = consecutiveFailsValue
 	config.FailRate = faileRateValue
+	config.Fallback = *fallback
 	if err != nil {
 		fmt.Println("Lỗi chuyển đổi:", err)
 		return

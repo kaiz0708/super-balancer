@@ -5,6 +5,7 @@ import (
 	"Go/algo/custom"
 	"Go/config"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -25,9 +26,7 @@ func UpdateActiveConnection(backend string, state bool) {
 }
 
 func CheckUnhealthyBackend(w http.ResponseWriter, r *http.Request) {
-	backends := config.MetricsMap
-
-	for backend, m := range backends {
+	for backend, m := range config.MetricsMap {
 		if !m.Metrics.IsHealthy {
 			url, _ := url.Parse(backend)
 			start := time.Now()
@@ -79,14 +78,15 @@ func ChangeAlgoLoadBalancer(w http.ResponseWriter, r *http.Request) {
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	target := ""
 	pickState := AnalyzeSystemState()
 
 	if pickState == "AllFailed" {
+		fmt.Println("Backend die all")
 		custom.CustomAllFailed(w)
-	} else {
-		target = algo.ChooseAlgorithm(pickState)
+		return
 	}
+
 	go CheckUnhealthyBackend(w, r)
+	target := algo.ChooseAlgorithm(pickState)
 	HttpProxy(target, w, r)
 }

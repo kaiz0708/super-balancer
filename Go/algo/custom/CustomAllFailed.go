@@ -1,6 +1,7 @@
 package custom
 
 import (
+	"Go/config"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -10,7 +11,7 @@ func CustomAllFailed(w http.ResponseWriter) {
 	errorResponse := map[string]interface{}{
 		"status":    503,
 		"message":   "Tất cả backend hiện tại đều không thể truy cập. Xin thử lại sau.",
-		"fallback":  "backend-dự-phòng-url",
+		"fallback":  config.Fallback,
 		"timestamp": time.Now().Format(time.RFC3339),
 	}
 

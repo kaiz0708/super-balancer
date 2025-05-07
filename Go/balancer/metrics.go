@@ -31,24 +31,26 @@ func UpdateMetrics(backend string, latency time.Duration, success bool, status i
 		}
 	}
 
+	if m.ConsecutiveSuccess >= config.ConsecutiveSuccess {
+		m.IsHealthy = true
+		m.ConsecutiveFails = 0
+		m.AvgLatency = 0
+		m.TotalLatency = 0
+		m.LastLatency = 0
+		m.TimeoutBreak = 0
+		m.ConsecutiveSuccess = 0
+	}
+
 	if success {
 		m.SuccessCount++
-		if m.ConsecutiveFails >= config.ConsecutiveFails {
-			m.AvgLatency = 0
-			m.TotalLatency = 0
-			m.RequestCount = 0
-			m.FailureCount = 0
-
-		}
 		m.ConsecutiveFails = 0
-		m.IsHealthy = true
 	} else {
 		m.FailureCount++
 		m.ConsecutiveFails++
 	}
 
 	failRate := float64(m.FailureCount) / float64(m.RequestCount)
-	if m.ConsecutiveFails >= config.ConsecutiveFails || failRate >= config.FailRate || m.AvgLatency >= 500*time.Millisecond || m.LastLatency >= 1*time.Second {
+	if m.ConsecutiveFails >= config.ConsecutiveFails || failRate >= config.FailRate || m.AvgLatency >= 1*time.Second || m.TimeoutBreak >= config.TimeOutRate {
 		m.IsHealthy = false
 	}
 

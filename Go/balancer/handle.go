@@ -2,10 +2,11 @@ package balancer
 
 import (
 	"Go/algo"
-	"Go/algo/custom"
 	"Go/config"
+	"Go/response"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -25,24 +26,37 @@ func UpdateActiveConnection(backend string, state bool) {
 	UpdateActiveConnectionMetrics(backend, state)
 }
 
-func CheckUnhealthyBackend(w http.ResponseWriter, r *http.Request) {
+func CheckUnhealthyBackend() {
 	for backend, m := range config.MetricsMap {
-		if !m.Metrics.IsHealthy {
-			url, _ := url.Parse(backend)
-			start := time.Now()
-			proxy := httputil.NewSingleHostReverseProxy(url)
-			proxy.ModifyResponse = func(resp *http.Response) error {
+		if !m.Metrics.IsHealthy && m.HealthPath != "" {
+			go func(backend string, m *config.BackendMetrics) {
+				url := backend + m.HealthPath
+				start := time.Now()
+
+				resp, err := http.Get(url)
+				if err != nil {
+					fmt.Printf("Failed health check for %s: %v\n", backend, err)
+					return
+				}
+				defer resp.Body.Close()
+
+				if resp.StatusCode == 200 {
+					m.Mutex.Lock()
+					config.MetricsMap[backend].Metrics.ConsecutiveSuccess++
+					m.Mutex.Unlock()
+				}
 				UpdateMetricsBackend(backend, start, resp.StatusCode)
-				return nil
-			}
-			r.Host = url.Host
-			proxy.ServeHTTP(w, r)
+			}(backend, m)
 		}
 	}
 }
 
 func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 	url, err := url.Parse(backend)
+
+	transport := &http.Transport{
+		ResponseHeaderTimeout: 1 * time.Second,
+	}
 
 	if err != nil {
 		http.Error(w, "Invalid backend URL", http.StatusInternalServerError)
@@ -51,15 +65,22 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 
 	start := time.Now()
 	proxy := httputil.NewSingleHostReverseProxy(url)
+	proxy.Transport = transport
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
-		go UpdateActiveConnection(url.String(), false)
+		go UpdateActiveConnection(backend, false)
 		go UpdateMetricsBackend(backend, start, resp.StatusCode)
 		return nil
 	}
 
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		go UpdateActiveConnection(url.String(), false)
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			config.MetricsMap[backend].Mutex.Lock()
+			config.MetricsMap[backend].Metrics.TimeoutBreak++
+			config.MetricsMap[backend].Mutex.Unlock()
+		}
+		fmt.Println("err", err)
+		go UpdateActiveConnection(backend, false)
 		go UpdateMetricsBackend(backend, start, 502)
 	}
 
@@ -78,15 +99,13 @@ func ChangeAlgoLoadBalancer(w http.ResponseWriter, r *http.Request) {
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
+	CheckUnhealthyBackend()
 	pickState := AnalyzeSystemState()
-
 	if pickState == "AllFailed" {
 		fmt.Println("Backend die all")
-		custom.CustomAllFailed(w)
+		response.CustomAllFailed(w)
 		return
 	}
-
-	go CheckUnhealthyBackend(w, r)
 	target := algo.ChooseAlgorithm(pickState)
 	HttpProxy(target, w, r)
 }

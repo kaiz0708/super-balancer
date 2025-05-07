@@ -12,10 +12,10 @@ func AnalyzeSystemState() string {
 	totalBackends := len(backends)
 
 	for _, backend := range backends {
-		if backend.Metrics.IsHealthy && backend.Metrics.ConsecutiveFails <= 5 {
+		if backend.Metrics.IsHealthy && backend.Metrics.ConsecutiveFails <= config.ConsecutiveFails {
 			healthyCount++
 		}
-		if backend.Metrics.LastLatency >= 500*time.Millisecond || backend.Metrics.AvgLatency >= 500*time.Millisecond {
+		if backend.Metrics.AvgLatency >= 1*time.Second || backend.Metrics.TimeoutBreak >= config.TimeOutRate {
 			highLatencyCount++
 		}
 	}

@@ -11,7 +11,17 @@ import (
 )
 
 func CallRequest(id int) {
-	resp, err := http.Get("http://localhost:8080/api/photo/list")
+	endpoints := []string{
+		"http://localhost:8080/api/photo/list",
+		"http://localhost:8080/api/timeout",
+		"http://localhost:8080/api/photo/list",
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	randomIndex := rand.Intn(len(endpoints))
+	url := endpoints[randomIndex]
+
+	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Printf("Request %d lỗi: %v\n", id, err)
 		return
@@ -20,9 +30,9 @@ func CallRequest(id int) {
 }
 
 const (
-	maxConcurrency = 20
-	minDelay       = 400
-	maxExtraDelay  = 200
+	maxConcurrency = 30
+	minDelay       = 600
+	maxExtraDelay  = 400
 )
 
 func SpamRequests(w http.ResponseWriter, r *http.Request) {

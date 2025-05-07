@@ -26,7 +26,7 @@ func CustomManyFailed() string {
 
 		successRate := float64(successRequest) / float64(totalRequest)
 
-		if (successRate > highestSuccessRate) || (successRate == highestSuccessRate && activeConn < lowestActiveConn) {
+		if (successRate > highestSuccessRate) || (successRate <= highestSuccessRate && activeConn < lowestActiveConn) {
 			highestSuccessRate = successRate
 			lowestActiveConn = activeConn
 			selected = backend

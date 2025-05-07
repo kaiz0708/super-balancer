@@ -16,7 +16,7 @@ func ChooseAlgorithm(state string) string {
 		selected = custom.CustomManyFailed()
 	case "HighLatency":
 		AlgoCurrent = "HighLatency"
-		selected = custom.CustomHighLatency()
+		selected = custom.CustomLowLatency()
 	default:
 		AlgoCurrent = config.LoadBalancerDefault
 		selected = AlgoLoadBalancer(config.LoadBalancerDefault)

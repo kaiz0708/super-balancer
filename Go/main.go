@@ -4,6 +4,7 @@ import (
 	test "Go/TestRequest"
 	"Go/balancer"
 	"Go/config"
+	"Go/response"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -20,8 +21,9 @@ func main() {
 	algorithm := flag.String("algorithm", "", "Load balancing algorithm")
 	backends := flag.String("backends", "", "JSON array of backend servers")
 	consecutiveFails := flag.String("consecutiveFails", "", "Set up amount consecutiveFails")
+	consecutiveSuccess := flag.String("consecutiveSuccess", "", "Set up amount consecutiveSuccess")
 	failRate := flag.String("failRate", "", "Set up rate fail")
-	fallback := flag.String("fallback", "", "Set up fallback")
+	timeOutBreak := flag.String("timeOutBreak", "", "Set up timeout break")
 
 	flag.Parse()
 
@@ -36,7 +38,19 @@ func main() {
 		return
 	}
 
+	consecutiveSuccessValue, err := strconv.ParseUint(*consecutiveSuccess, 10, 64)
+	if err != nil {
+		fmt.Println("Lỗi chuyển đổi:", err)
+		return
+	}
+
 	faileRateValue, err := strconv.ParseFloat(*failRate, 64)
+	if err != nil {
+		fmt.Println("Lỗi chuyển đổi:", err)
+		return
+	}
+
+	timeOutBreakValue, err := strconv.ParseUint(*timeOutBreak, 10, 64)
 	if err != nil {
 		fmt.Println("Lỗi chuyển đổi:", err)
 		return
@@ -63,8 +77,9 @@ func main() {
 	config.BackendServers = append(config.BackendServers, cfg.Servers...)
 	config.LoadBalancerDefault = cfg.Algorithm
 	config.ConsecutiveFails = consecutiveFailsValue
+	config.ConsecutiveSuccess = consecutiveSuccessValue
 	config.FailRate = faileRateValue
-	config.Fallback = *fallback
+	config.TimeOutRate = timeOutBreakValue
 	if err != nil {
 		fmt.Println("Lỗi chuyển đổi:", err)
 		return
@@ -74,6 +89,7 @@ func main() {
 	http.HandleFunc(cfg.DefaultProxy, balancer.Handler)
 	http.HandleFunc(cfg.DefaultProxy+"change-load-balancer", balancer.ChangeAlgoLoadBalancer)
 	http.HandleFunc(cfg.DefaultProxy+"test", test.SpamRequests)
+	http.HandleFunc("/metrics", response.HandleStatusHTML)
 	fmt.Println("🚀 Load balancer running on :8080")
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

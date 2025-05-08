@@ -24,10 +24,28 @@ func main() {
 	consecutiveSuccess := flag.String("consecutiveSuccess", "", "Set up amount consecutiveSuccess")
 	failRate := flag.String("failRate", "", "Set up rate fail")
 	timeOutBreak := flag.String("timeOutBreak", "", "Set up timeout break")
+	timeOutDelay := flag.String("timeOutDelay", "", "Set up timeout delay")
 
 	flag.Parse()
 
-	if *defaultProxy == "" || *algorithm == "" || *backends == "" || *consecutiveFails == "" || *failRate == "" {
+	fmt.Println("========== Flag Values =========")
+	fmt.Println("defaultProxy:", *defaultProxy)
+	fmt.Println("algorithm:", *algorithm)
+	fmt.Println("backends:", *backends)
+	fmt.Println("consecutiveFails:", *consecutiveFails)
+	fmt.Println("consecutiveSuccess:", *consecutiveSuccess)
+	fmt.Println("failRate:", *failRate)
+	fmt.Println("timeOutBreak:", *timeOutBreak)
+	fmt.Println("timeOutDelay:", *timeOutDelay)
+
+	if *defaultProxy == "" ||
+		*algorithm == "" ||
+		*backends == "" ||
+		*consecutiveFails == "" ||
+		*consecutiveSuccess == "" ||
+		*failRate == "" ||
+		*timeOutBreak == "" ||
+		*timeOutDelay == "" {
 		fmt.Println("Missing one or more required flags")
 		os.Exit(1)
 	}
@@ -39,6 +57,12 @@ func main() {
 	}
 
 	consecutiveSuccessValue, err := strconv.ParseUint(*consecutiveSuccess, 10, 64)
+	if err != nil {
+		fmt.Println("Lỗi chuyển đổi:", err)
+		return
+	}
+
+	timeOutDelayValue, err := strconv.ParseUint(*timeOutDelay, 10, 64)
 	if err != nil {
 		fmt.Println("Lỗi chuyển đổi:", err)
 		return
@@ -80,6 +104,7 @@ func main() {
 	config.ConsecutiveSuccess = consecutiveSuccessValue
 	config.FailRate = faileRateValue
 	config.TimeOutRate = timeOutBreakValue
+	config.TimeOutDelay = timeOutDelayValue
 	if err != nil {
 		fmt.Println("Lỗi chuyển đổi:", err)
 		return

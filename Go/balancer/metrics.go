@@ -50,7 +50,7 @@ func UpdateMetrics(backend string, latency time.Duration, success bool, status i
 	}
 
 	failRate := float64(m.FailureCount) / float64(m.RequestCount)
-	if m.ConsecutiveFails >= config.ConsecutiveFails || failRate >= config.FailRate || m.AvgLatency >= 1*time.Second || m.TimeoutBreak >= config.TimeOutRate {
+	if m.ConsecutiveFails >= config.ConsecutiveFails || failRate >= config.FailRate || m.TimeoutBreak >= config.TimeOutRate {
 		m.IsHealthy = false
 	}
 

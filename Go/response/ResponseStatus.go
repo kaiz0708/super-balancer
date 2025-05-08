@@ -18,19 +18,19 @@ func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
 		Algorithm: config.LoadBalancerDefault,
 	}
 
-	tmpl := `<!DOCTYPE html>
+	tmpl := `<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Load Balancer Metrics</title>
+    <title>load balancer metrics</title>
     <style>
         :root {
-            --primary-color: #2c3e50;
+            --primary-color: #34495e;
             --accent-color: #3498db;
-            --healthy-color: #27ae60;
+            --healthy-color: #2ecc71;
             --unhealthy-color: #e74c3c;
-            --background-color: #ecf0f1;
+            --background-color: #f5f7fa;
             --card-background: #ffffff;
         }
 
@@ -41,35 +41,36 @@ func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--background-color);
             color: var(--primary-color);
-            line-height: 1.6;
-            padding: 20px;
+            line-height: 1.7;
+            padding: 16px;
+            font-size: 14px;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1300px;
             margin: 0 auto;
             background: var(--card-background);
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
         }
 
         h1 {
             text-align: center;
             color: var(--primary-color);
-            font-size: 2.5rem;
-            margin-bottom: 30px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-size: 1.8rem;
+            margin-bottom: 24px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
         .table-container {
             overflow-x: auto;
             border-radius: 8px;
-            margin-top: 20px;
+            margin-top: 16px;
         }
 
         table {
@@ -80,17 +81,16 @@ func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
         }
 
         th, td {
-            padding: 15px;
+            padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-            font-size: 0.95rem;
+            border-bottom: 1px solid #ebedf0;
+            font-size: 13px;
         }
 
         th {
             background-color: var(--accent-color);
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
+            color: #fff;
+            font-weight: 500;
             letter-spacing: 0.5px;
             position: sticky;
             top: 0;
@@ -98,120 +98,128 @@ func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
         }
 
         tr {
-            transition: background-color 0.3s ease;
+            transition: background-color 0.2s ease;
         }
 
         tr:nth-child(even) {
-            background-color: #f8f9fa;
+            background-color: #fafafa;
         }
 
         tr:hover {
-            background-color: #e8ecef;
+            background-color: #f1f3f5;
         }
 
         .status {
-            padding: 8px 12px;
+            padding: 6px 10px;
             border-radius: 12px;
             font-weight: 500;
             text-align: center;
             display: inline-block;
+            font-size: 12px;
         }
 
         .healthy {
             background-color: var(--healthy-color);
-            color: white;
+            color: #fff;
         }
 
         .unhealthy {
             background-color: var(--unhealthy-color);
-            color: white;
+            color: #fff;
         }
 
         .metric-number {
-            font-family: 'Courier New', monospace;
-            font-weight: 500;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 400;
         }
 
         .button {
             display: inline-block;
-            padding: 12px 24px;
+            padding: 10px 20px;
             background-color: var(--accent-color);
-            color: white;
+            color: #fff;
             text-decoration: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: 500;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            margin: 20px 0;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            margin: 16px 0;
             text-align: center;
+            font-size: 13px;
         }
 
         .button:hover {
-            background-color: #2980b9;
-            transform: translateY(-2px);
+            background-color: #16a085;
+            transform: translateY(-1px);
         }
 
         .form-container {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
-            margin: 20px 0;
+            margin: 16px 0;
         }
 
         .select-algorithm {
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 1rem;
-            background: white;
+            padding: 10px;
+            border: 1px solid #ebedf0;
+            border-radius: 8px;
+            font-size: 13px;
+            background: #fff;
             cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+
+        .select-algorithm:focus {
+            outline: none;
+            border-color: var(--accent-color);
         }
 
         .submit-button {
-            padding: 12px 24px;
+            padding: 10px 20px;
             background-color: var(--accent-color);
-            color: white;
+            color: #fff;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.3s ease;
+            font-size: 13px;
+            transition: background-color 0.2s ease;
         }
 
         .submit-button:hover {
-            background-color: #2980b9;
+            background-color: #16a085;
         }
 
         .feedback-message {
-            margin-top: 10px;
+            margin-top: 8px;
             text-align: center;
-            font-size: 0.9rem;
-            padding: 10px;
-            border-radius: 6px;
+            font-size: 12px;
+            padding: 8px;
+            border-radius: 8px;
             display: none;
         }
 
         .success {
             background-color: var(--healthy-color);
-            color: white;
+            color: #fff;
         }
 
         .error {
             background-color: var(--unhealthy-color);
-            color: white;
+            color: #fff;
         }
 
         @media (max-width: 768px) {
             .container {
-                padding: 15px;
+                padding: 12px;
             }
 
             h1 {
-                font-size: 1.8rem;
+                font-size: 1.5rem;
             }
 
             th, td {
-                font-size: 0.85rem;
-                padding: 10px;
+                font-size: 12px;
+                padding: 8px;
             }
 
             .form-container {
@@ -222,14 +230,14 @@ func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
             .select-algorithm,
             .submit-button {
                 width: 100%;
-                max-width: 300px;
+                max-width: 280px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Load Balancer Metrics</h1>
+        <h1>load balancer metrics</h1>
         <div class="table-container">
             <table>
                 <tr>
@@ -261,7 +269,7 @@ func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
                     <td class="metric-number">{{$backend.Metrics.TimeoutBreak}}</td>
                     <td>
                         <span class="status {{if $backend.Metrics.IsHealthy}}healthy{{else}}unhealthy{{end}}">
-                            {{if $backend.Metrics.IsHealthy}}Healthy{{else}}Unhealthy{{end}}
+                            {{if $backend.Metrics.IsHealthy}}healthy{{else}}unhealthy{{end}}
                         </span>
                     </td>
                     <td>{{$backend.Metrics.LastStatus}}</td>
@@ -275,13 +283,14 @@ func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
         <div class="form-container">
             <form id="change-algorithm-form">
                 <select class="select-algorithm" name="name">
-                    <option value="ROUND_ROBIN" {{if eq .Algorithm "ROUND_ROBIN"}}selected{{end}}>Round Robin</option>
-					<option value="LEAST_CONNECTION" {{if eq .Algorithm "LEAST_CONNECTION"}}selected{{end}}>Least Connections</option>
-					<option value="WEIGHTED_LEAST_CONNECTION" {{if eq .Algorithm "WEIGHTED_LEAST_CONNECTION"}}selected{{end}}>Weighted Least Connection</option>
-					<option value="WEIGHTED_ROUND_ROBIN" {{if eq .Algorithm "WEIGHTED_ROUND_ROBIN"}}selected{{end}}>Weighted Round Robin</option>
-					<option value="RANDOM" {{if eq .Algorithm "RANDOM"}}selected{{end}}>Random</option>
+                    <option value="ROUND_ROBIN" {{if eq .Algorithm "ROUND_ROBIN"}}selected{{end}}>round robin</option>
+                    <option value="LEAST_CONNECTION" {{if eq .Algorithm "LEAST_CONNECTION"}}selected{{end}}>least connections</option>
+                    <option value="WEIGHTED_LEAST_CONNECTION" {{if eq .Algorithm "WEIGHTED_LEAST_CONNECTION"}}selected{{end}}>weighted least connection</option>
+                    <option value="WEIGHTED_ROUND_ROBIN" {{if eq .Algorithm "WEIGHTED_ROUND_ROBIN"}}selected{{end}}>weighted round robin</option>
+                    <option value="RANDOM" {{if eq .Algorithm "RANDOM"}}selected{{end}}>random</option>
+                    <option value="WEIGHTED_RANDOM" {{if eq .Algorithm "WEIGHTED_RANDOM"}}selected{{end}}>weighted random</option>
                 </select>
-                <button type="submit" class="submit-button">Apply Algorithm</button>
+                <button type="submit" class="submit-button">apply algorithm</button>
             </form>
         </div>
         <div id="feedback-message" class="feedback-message"></div>
@@ -304,14 +313,14 @@ func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
 
                 if (response.ok) {
                     const result = await response.json();
-                    feedbackMessage.textContent = 'Successfully changed to ' + result + ' algorithm';
+                    feedbackMessage.textContent = 'successfully changed to ' + result + ' algorithm';
                     feedbackMessage.classList.remove('error');
                     feedbackMessage.classList.add('success');
                 } else {
-                    throw new Error('Failed to change algorithm');
+                    throw new Error('failed to change algorithm');
                 }
             } catch (error) {
-                feedbackMessage.textContent = 'Error: ' + error.message;
+                feedbackMessage.textContent = 'error: ' + error.message;
                 feedbackMessage.classList.remove('success');
                 feedbackMessage.classList.add('error');
             }

@@ -34,7 +34,7 @@ func CustomLowLatency() string {
 
 		currentWeight := target.Metrics.CurrentWeight + target.Metrics.Weight
 
-		if target.Metrics.AvgLatency <= minLatency || maxCurrentWeight <= currentWeight {
+		if target.Metrics.AvgLatency < minLatency || maxCurrentWeight <= currentWeight {
 			maxCurrentWeight = currentWeight
 			minLatency = target.Metrics.AvgLatency
 			selected = backend

@@ -42,6 +42,9 @@ func AlgoLoadBalancer(algo string) string {
 	case config.RandomAlgo:
 		selected = algo_default.Random()
 
+	case config.WeightedRandom:
+		selected = algo_default.WeightedRandom()
+
 	default:
 		selected = algo_default.RoundRobin()
 	}

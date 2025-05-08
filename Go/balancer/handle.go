@@ -44,8 +44,8 @@ func CheckUnhealthyBackend() {
 					m.Mutex.Lock()
 					config.MetricsMap[backend].Metrics.ConsecutiveSuccess++
 					m.Mutex.Unlock()
+					UpdateMetricsBackend(backend, start, resp.StatusCode)
 				}
-				UpdateMetricsBackend(backend, start, resp.StatusCode)
 			}(backend, m)
 		}
 	}
@@ -55,7 +55,7 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 	url, err := url.Parse(backend)
 
 	transport := &http.Transport{
-		ResponseHeaderTimeout: 1 * time.Second,
+		ResponseHeaderTimeout: time.Duration(config.TimeOutDelay) * time.Second,
 	}
 
 	if err != nil {
@@ -79,7 +79,6 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 			config.MetricsMap[backend].Metrics.TimeoutBreak++
 			config.MetricsMap[backend].Mutex.Unlock()
 		}
-		fmt.Println("err", err)
 		go UpdateActiveConnection(backend, false)
 		go UpdateMetricsBackend(backend, start, 502)
 	}
@@ -102,7 +101,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	CheckUnhealthyBackend()
 	pickState := AnalyzeSystemState()
 	if pickState == "AllFailed" {
-		fmt.Println("Backend die all")
 		response.CustomAllFailed(w)
 		return
 	}

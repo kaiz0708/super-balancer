@@ -11,6 +11,7 @@ const (
 	WeightedLeastConnection = "WEIGHTED_LEAST_CONNECTION"
 	WeightedRoundRobin      = "WEIGHTED_ROUND_ROBIN"
 	RandomAlgo              = "RANDOM"
+	WeightedRandom          = "WEIGHTED_RANDOM"
 )
 
 type Metrics struct {
@@ -60,6 +61,8 @@ var ConsecutiveSuccess uint64
 var FailRate float64
 
 var TimeOutRate uint64
+
+var TimeOutDelay uint64
 
 var BackendServers = []BackendConfig{}
 

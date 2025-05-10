@@ -25,6 +25,7 @@ func main() {
 	failRate := flag.String("failRate", "", "Set up rate fail")
 	timeOutBreak := flag.String("timeOutBreak", "", "Set up timeout break")
 	timeOutDelay := flag.String("timeOutDelay", "", "Set up timeout delay")
+	passwordAccessMetrics := flag.String("passwordAccessMetrics", "", "Set up Password to access metrics")
 
 	flag.Parse()
 
@@ -45,7 +46,8 @@ func main() {
 		*consecutiveSuccess == "" ||
 		*failRate == "" ||
 		*timeOutBreak == "" ||
-		*timeOutDelay == "" {
+		*timeOutDelay == "" ||
+		*passwordAccessMetrics == "" {
 		fmt.Println("Missing one or more required flags")
 		os.Exit(1)
 	}
@@ -105,6 +107,7 @@ func main() {
 	config.FailRate = faileRateValue
 	config.TimeOutRate = timeOutBreakValue
 	config.TimeOutDelay = timeOutDelayValue
+	config.PasswordAccessMetrics = *passwordAccessMetrics
 	if err != nil {
 		fmt.Println("Lỗi chuyển đổi:", err)
 		return

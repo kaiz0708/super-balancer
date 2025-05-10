@@ -64,6 +64,8 @@ var TimeOutRate uint64
 
 var TimeOutDelay uint64
 
+var PasswordAccessMetrics string
+
 var BackendServers = []BackendConfig{}
 
 func InitServer() {

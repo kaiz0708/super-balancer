@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -71,12 +72,10 @@ func logInforBackend() {
 
 func UpdateActiveConnectionMetrics(backend string, state bool) {
 	backendMetric := config.MetricsMap[backend]
-	backendMetric.Mutex.Lock()
-	defer backendMetric.Mutex.Unlock()
 	m := backendMetric.Metrics
 	if state {
-		m.ActiveConnections++
+		atomic.AddInt64(&m.ActiveConnections, 1)
 	} else {
-		m.ActiveConnections--
+		atomic.AddInt64(&m.ActiveConnections, -1)
 	}
 }

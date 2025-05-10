@@ -2,9 +2,12 @@ package response
 
 import (
 	"Go/config"
+	"embed"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"path/filepath"
 )
 
 type MetricsPageData struct {
@@ -12,337 +15,26 @@ type MetricsPageData struct {
 	Algorithm string
 }
 
+//go:embed templates/*
+var templates embed.FS
+
 func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
 	data := MetricsPageData{
 		Backends:  config.MetricsMap,
 		Algorithm: config.LoadBalancerDefault,
 	}
 
-	tmpl := `<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>load balancer metrics</title>
-    <style>
-        :root {
-            --primary-color: #34495e;
-            --accent-color: #3498db;
-            --healthy-color: #2ecc71;
-            --unhealthy-color: #e74c3c;
-            --background-color: #f5f7fa;
-            --card-background: #ffffff;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--background-color);
-            color: var(--primary-color);
-            line-height: 1.7;
-            padding: 16px;
-            font-size: 14px;
-        }
-
-        .container {
-            max-width: 1300px;
-            margin: 0 auto;
-            background: var(--card-background);
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        h1 {
-            text-align: center;
-            color: var(--primary-color);
-            font-size: 1.8rem;
-            margin-bottom: 24px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .table-container {
-            overflow-x: auto;
-            border-radius: 8px;
-            margin-top: 16px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            background: var(--card-background);
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ebedf0;
-            font-size: 13px;
-        }
-
-        th {
-            background-color: var(--accent-color);
-            color: #fff;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        tr {
-            transition: background-color 0.2s ease;
-        }
-
-        tr:nth-child(even) {
-            background-color: #fafafa;
-        }
-
-        tr:hover {
-            background-color: #f1f3f5;
-        }
-
-        .status {
-            padding: 6px 10px;
-            border-radius: 12px;
-            font-weight: 500;
-            text-align: center;
-            display: inline-block;
-            font-size: 12px;
-        }
-
-        .healthy {
-            background-color: var(--healthy-color);
-            color: #fff;
-        }
-
-        .unhealthy {
-            background-color: var(--unhealthy-color);
-            color: #fff;
-        }
-
-        .metric-number {
-            font-family: 'Roboto Mono', monospace;
-            font-weight: 400;
-        }
-
-        .button {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: var(--accent-color);
-            color: #fff;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: background-color 0.2s ease, transform 0.2s ease;
-            margin: 16px 0;
-            text-align: center;
-            font-size: 13px;
-        }
-
-        .button:hover {
-            background-color: #16a085;
-            transform: translateY(-1px);
-        }
-
-        .form-container {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            margin: 16px 0;
-        }
-
-        .select-algorithm {
-            padding: 10px;
-            border: 1px solid #ebedf0;
-            border-radius: 8px;
-            font-size: 13px;
-            background: #fff;
-            cursor: pointer;
-            transition: border-color 0.2s ease;
-        }
-
-        .select-algorithm:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
-
-        .submit-button {
-            padding: 10px 20px;
-            background-color: var(--accent-color);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: background-color 0.2s ease;
-        }
-
-        .submit-button:hover {
-            background-color: #16a085;
-        }
-
-        .feedback-message {
-            margin-top: 8px;
-            text-align: center;
-            font-size: 12px;
-            padding: 8px;
-            border-radius: 8px;
-            display: none;
-        }
-
-        .success {
-            background-color: var(--healthy-color);
-            color: #fff;
-        }
-
-        .error {
-            background-color: var(--unhealthy-color);
-            color: #fff;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 12px;
-            }
-
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            th, td {
-                font-size: 12px;
-                padding: 8px;
-            }
-
-            .form-container {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .select-algorithm,
-            .submit-button {
-                width: 100%;
-                max-width: 280px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>load balancer metrics</h1>
-        <div class="table-container">
-            <table>
-                <tr>
-                    <th>Backend</th>
-                    <th>Request Count</th>
-                    <th>Success Count</th>
-                    <th>Failure Count</th>
-                    <th>Total Latency</th>
-                    <th>Avg Latency</th>
-                    <th>Consecutive Fails</th>
-                    <th>Consecutive Success</th>
-                    <th>Timeout Break</th>
-                    <th>Health Status</th>
-                    <th>Last Status</th>
-                    <th>Active Connections</th>
-                    <th>Weight</th>
-                    <th>Current Weight</th>
-                </tr>
-                {{range $key, $backend := .Backends}}
-                <tr>
-                    <td>{{$key}}</td>
-                    <td class="metric-number">{{$backend.Metrics.RequestCount}}</td>
-                    <td class="metric-number">{{$backend.Metrics.SuccessCount}}</td>
-                    <td class="metric-number">{{$backend.Metrics.FailureCount}}</td>
-                    <td class="metric-number">{{$backend.Metrics.TotalLatency}}</td>
-                    <td class="metric-number">{{$backend.Metrics.AvgLatency}}</td>
-                    <td class="metric-number">{{$backend.Metrics.ConsecutiveFails}}</td>
-                    <td class="metric-number">{{$backend.Metrics.ConsecutiveSuccess}}</td>
-                    <td class="metric-number">{{$backend.Metrics.TimeoutBreak}}</td>
-                    <td>
-                        <span class="status {{if $backend.Metrics.IsHealthy}}healthy{{else}}unhealthy{{end}}">
-                            {{if $backend.Metrics.IsHealthy}}healthy{{else}}unhealthy{{end}}
-                        </span>
-                    </td>
-                    <td>{{$backend.Metrics.LastStatus}}</td>
-                    <td class="metric-number">{{$backend.Metrics.ActiveConnections}}</td>
-                    <td class="metric-number">{{$backend.Metrics.Weight}}</td>
-                    <td class="metric-number">{{$backend.Metrics.CurrentWeight}}</td>
-                </tr>
-                {{end}}
-            </table>
-        </div>
-        <div class="form-container">
-            <form id="change-algorithm-form">
-                <select class="select-algorithm" name="name">
-                    <option value="ROUND_ROBIN" {{if eq .Algorithm "ROUND_ROBIN"}}selected{{end}}>round robin</option>
-                    <option value="LEAST_CONNECTION" {{if eq .Algorithm "LEAST_CONNECTION"}}selected{{end}}>least connections</option>
-                    <option value="WEIGHTED_LEAST_CONNECTION" {{if eq .Algorithm "WEIGHTED_LEAST_CONNECTION"}}selected{{end}}>weighted least connection</option>
-                    <option value="WEIGHTED_ROUND_ROBIN" {{if eq .Algorithm "WEIGHTED_ROUND_ROBIN"}}selected{{end}}>weighted round robin</option>
-                    <option value="RANDOM" {{if eq .Algorithm "RANDOM"}}selected{{end}}>random</option>
-                    <option value="WEIGHTED_RANDOM" {{if eq .Algorithm "WEIGHTED_RANDOM"}}selected{{end}}>weighted random</option>
-                </select>
-                <button type="submit" class="submit-button">apply algorithm</button>
-            </form>
-        </div>
-        <div id="feedback-message" class="feedback-message"></div>
-    </div>
-    <script>
-        document.getElementById('change-algorithm-form').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            
-            const selectElement = this.querySelector('.select-algorithm');
-            const algorithm = selectElement.value;
-            const feedbackMessage = document.getElementById('feedback-message');
-
-            try {
-                const response = await fetch('/change-load-balancer?name=' + encodeURIComponent(algorithm), {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    feedbackMessage.textContent = 'successfully changed to ' + result + ' algorithm';
-                    feedbackMessage.classList.remove('error');
-                    feedbackMessage.classList.add('success');
-                } else {
-                    throw new Error('failed to change algorithm');
-                }
-            } catch (error) {
-                feedbackMessage.textContent = 'error: ' + error.message;
-                feedbackMessage.classList.remove('success');
-                feedbackMessage.classList.add('error');
-            }
-
-            feedbackMessage.style.display = 'block';
-            setTimeout(() => {
-                feedbackMessage.style.display = 'none';
-            }, 3000);
-        });
-    </script>
-</body>
-</html>`
-
-	t, err := template.New("metrics").Parse(tmpl)
+	templatePath := filepath.Join("templates", "metrics.html")
+	fmt.Println("templatePath : ", templatePath)
+	tmpl, err := template.ParseFS(templates, "templates/metrics.html")
 	if err != nil {
-		log.Println("Error parsing template:", err)
+		fmt.Println("Error parsing template:", err)
 		http.Error(w, "Error rendering page", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html")
-	err = t.Execute(w, data)
+	err = tmpl.Execute(w, data)
 	if err != nil {
 		log.Println("Error rendering HTML:", err)
 		http.Error(w, "Error rendering page", http.StatusInternalServerError)

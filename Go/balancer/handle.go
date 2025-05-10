@@ -22,6 +22,25 @@ func UpdateMetricsBackend(backend string, start time.Time, statusCode int) {
 	UpdateMetrics(backend, latency, success, statusCode)
 }
 
+func Login(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	if username == "admin" && password == config.PasswordAccessMetrics {
+		http.SetCookie(w, &http.Cookie{
+			Name:  "token",
+			Value: "Bearer your-secret-token",
+			Path:  "/",
+		})
+		http.Redirect(w, r, "/metrics", http.StatusSeeOther)
+	} else {
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+	}
+}
+
 func UpdateActiveConnection(backend string, state bool) {
 	UpdateActiveConnectionMetrics(backend, state)
 }
@@ -89,12 +108,17 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 }
 
 func ChangeAlgoLoadBalancer(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("token")
+	if err != nil || cookie.Value != "Bearer your-secret-token" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	name := r.URL.Query().Get("name")
 
 	config.LoadBalancerDefault = name
 
 	json.NewEncoder(w).Encode(name)
-
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {

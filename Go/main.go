@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -25,7 +26,7 @@ func main() {
 	failRate := flag.String("failRate", "", "Set up rate fail")
 	timeOutBreak := flag.String("timeOutBreak", "", "Set up timeout break")
 	timeOutDelay := flag.String("timeOutDelay", "", "Set up timeout delay")
-	passwordAccessMetrics := flag.String("passwordAccessMetrics", "", "Set up Password to access metrics")
+	auth := flag.String("auth", "", "Set up auth")
 
 	flag.Parse()
 
@@ -39,6 +40,8 @@ func main() {
 	fmt.Println("timeOutBreak:", *timeOutBreak)
 	fmt.Println("timeOutDelay:", *timeOutDelay)
 
+	fmt.Println("auth", *auth)
+
 	if *defaultProxy == "" ||
 		*algorithm == "" ||
 		*backends == "" ||
@@ -46,8 +49,7 @@ func main() {
 		*consecutiveSuccess == "" ||
 		*failRate == "" ||
 		*timeOutBreak == "" ||
-		*timeOutDelay == "" ||
-		*passwordAccessMetrics == "" {
+		*timeOutDelay == "" {
 		fmt.Println("Missing one or more required flags")
 		os.Exit(1)
 	}
@@ -91,6 +93,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := json.Unmarshal([]byte(*auth), &config.AuthConfig); err != nil {
+		fmt.Println("Failed to parse auth:", err)
+		os.Exit(1)
+	}
+
 	validate := validator.New()
 	err = validate.Struct(cfg)
 	if err != nil {
@@ -107,17 +114,18 @@ func main() {
 	config.FailRate = faileRateValue
 	config.TimeOutRate = timeOutBreakValue
 	config.TimeOutDelay = timeOutDelayValue
-	config.PasswordAccessMetrics = *passwordAccessMetrics
+	config.ActiveLogin = false
 	if err != nil {
 		fmt.Println("Lỗi chuyển đổi:", err)
 		return
 	}
 	config.InitServer()
-
+	balancer.StartHealthCheck(1 * time.Second)
 	http.HandleFunc(cfg.DefaultProxy, balancer.Handler)
 	http.HandleFunc(cfg.DefaultProxy+"change-load-balancer", balancer.ChangeAlgoLoadBalancer)
 	http.HandleFunc(cfg.DefaultProxy+"test", test.SpamRequests)
 	http.HandleFunc("/metrics", response.HandleStatusHTML)
+	http.HandleFunc("/login-metrics", balancer.Login)
 	fmt.Println("🚀 Load balancer running on :8080")
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

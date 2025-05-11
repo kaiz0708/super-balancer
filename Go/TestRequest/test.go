@@ -55,8 +55,6 @@ func CallRequest(id int) {
 		return
 	}
 	defer resp.Body.Close()
-
-	fmt.Printf("Request %d (%s %s) -> Status: %d\n", id, selected.Method, selected.URL, resp.StatusCode)
 }
 
 func SpamRequests(w http.ResponseWriter, r *http.Request) {

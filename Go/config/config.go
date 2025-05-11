@@ -32,6 +32,11 @@ type Metrics struct {
 	CurrentWeight      int64
 }
 
+type AuthBasic struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type BackendConfig struct {
 	UrlConfig        string `json:"url" validate:"required"`
 	WeightConfig     int64  `json:"weight"`
@@ -64,7 +69,9 @@ var TimeOutRate uint64
 
 var TimeOutDelay uint64
 
-var PasswordAccessMetrics string
+var ActiveLogin bool
+
+var AuthConfig AuthBasic
 
 var BackendServers = []BackendConfig{}
 

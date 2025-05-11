@@ -29,12 +29,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.FormValue("username")
 	password := r.FormValue("password")
-	if username == "admin" && password == config.PasswordAccessMetrics {
-		http.SetCookie(w, &http.Cookie{
-			Name:  "token",
-			Value: "Bearer your-secret-token",
-			Path:  "/",
-		})
+	if username == config.AuthConfig.Username && password == config.AuthConfig.Password {
+		config.ActiveLogin = true
 		http.Redirect(w, r, "/metrics", http.StatusSeeOther)
 	} else {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
@@ -108,17 +104,22 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 }
 
 func ChangeAlgoLoadBalancer(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("token")
-	if err != nil || cookie.Value != "Bearer your-secret-token" {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
 	name := r.URL.Query().Get("name")
 
 	config.LoadBalancerDefault = name
 
 	json.NewEncoder(w).Encode(name)
+}
+
+func StartHealthCheck(interval time.Duration) {
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			CheckUnhealthyBackend()
+		}
+	}()
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {

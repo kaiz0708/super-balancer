@@ -1,93 +1,30 @@
-<!Doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <style>
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #f5f7fa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            color: #2d3748;
-        }
-        .login-form {
-            background: #fff;
-            padding: 2.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            width: 360px;
-        }
-        h2 {
-            margin: 0 0 1.5rem;
-            font-size: 1.75rem;
-            font-weight: 600;
-            text-align: center;
-            color: #1a202c;
-        }
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            font-size: 0.875rem;
-        }
-        input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            transition: all 0.2s;
-            box-sizing: border-box;
-        }
-        input:focus {
-            outline: none;
-            border-color: #4299e1;
-            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
-        }
-        button {
-            width: 100%;
-            padding: 0.75rem;
-            background: #4299e1;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 0.875rem;
-            transition: all 0.2s;
-            margin-top: 0.5rem;
-        }
-        button:hover {
-            background: #3182ce;
-            transform: translateY(-1px);
-        }
-        button:active {
-            transform: translateY(0);
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="login-form">
-        <h2>Login</h2>
-        <form action="/login" method="POST">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required placeholder="Enter your username">
+<body class="font-inter bg-gray-100 flex justify-center items-center min-h-screen m-0 text-gray-800">
+    <div class="bg-white p-10 rounded-xl shadow-md w-96">
+        <h2 class="mb-6 text-2xl font-semibold text-center text-gray-900">Login</h2>
+        <form action="/login-metrics" method="POST">
+            <div class="mb-5">
+                <label for="username" class="block mb-2 font-medium text-sm">Username</label>
+                <input type="text" id="username" name="username" required placeholder="Enter your username"
+                       class="w-full p-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition">
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="Enter your password">
+            <div class="mb-5">
+                <label for="password" class="block mb-2 font-medium text-sm">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter your password"
+                       class="w-full p-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition">
             </div>
-            <button type="submit">Sign In</button>
+            <button type="submit"
+                    class="w-full p-3 bg-blue-500 text-white rounded-md font-medium text-sm hover:bg-blue-600 transform hover:-translate-y-0.5 active:translate-y-0 transition">
+                Sign In
+            </button>
         </form>
     </div>
 </body>
-</html> 
+</html>

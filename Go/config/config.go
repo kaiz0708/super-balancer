@@ -85,5 +85,6 @@ func InitServer() {
 			},
 			HealthPath: url.HealthPathConfig,
 		}
+		GlobalDB.InsertMetrics(url.UrlConfig, "healthy", *MetricsMap[url.UrlConfig].Metrics)
 	}
 }

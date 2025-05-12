@@ -119,7 +119,9 @@ func main() {
 		fmt.Println("Lỗi chuyển đổi:", err)
 		return
 	}
+	config.NewDB("./config/load_balancer.db")
 	config.InitServer()
+	config.GlobalDB.ReadMetrics()
 	balancer.StartHealthCheck(1 * time.Second)
 	http.HandleFunc(cfg.DefaultProxy, balancer.Handler)
 	http.HandleFunc(cfg.DefaultProxy+"change-load-balancer", balancer.ChangeAlgoLoadBalancer)

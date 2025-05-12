@@ -12,6 +12,9 @@ const (
 	WeightedRoundRobin      = "WEIGHTED_ROUND_ROBIN"
 	RandomAlgo              = "RANDOM"
 	WeightedRandom          = "WEIGHTED_RANDOM"
+	Unhealthy               = "UNHEALTHY"
+	Recovery                = "RECOVERY"
+	Healthy                 = "HEALTHY"
 )
 
 type Metrics struct {
@@ -85,6 +88,5 @@ func InitServer() {
 			},
 			HealthPath: url.HealthPathConfig,
 		}
-		GlobalDB.InsertMetrics(url.UrlConfig, "healthy", *MetricsMap[url.UrlConfig].Metrics)
 	}
 }

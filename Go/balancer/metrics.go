@@ -15,44 +15,21 @@ var TotalRequests uint64 = 0
 
 const updateEvery = 100
 
-func UpdateMetrics(backend string, latency time.Duration, success bool, status int) {
+func UpdateMetrics(backend string, latency time.Duration, status int) {
 	backendMetric := config.MetricsMap[backend]
 	backendMetric.Mutex.Lock()
 	defer backendMetric.Mutex.Unlock()
 	m := backendMetric.Metrics
-	if m.IsHealthy {
-		m.RequestCount++
-		m.TotalLatency += latency
-		m.LastLatency = latency
-		m.LastChecked = time.Now()
-		m.LastStatus = status
+	m.SuccessCount++
+	m.ConsecutiveFails = 0
+	m.RequestCount++
+	m.TotalLatency += latency
+	m.LastLatency = latency
+	m.LastChecked = time.Now()
+	m.LastStatus = status
 
-		if m.RequestCount > 0 {
-			m.AvgLatency = m.TotalLatency / time.Duration(m.RequestCount)
-		}
-	}
-
-	if m.ConsecutiveSuccess >= config.ConsecutiveSuccess {
-		m.IsHealthy = true
-		m.ConsecutiveFails = 0
-		m.AvgLatency = 0
-		m.TotalLatency = 0
-		m.LastLatency = 0
-		m.TimeoutBreak = 0
-		m.ConsecutiveSuccess = 0
-	}
-
-	if success {
-		m.SuccessCount++
-		m.ConsecutiveFails = 0
-	} else {
-		m.FailureCount++
-		m.ConsecutiveFails++
-	}
-
-	failRate := float64(m.FailureCount) / float64(m.RequestCount)
-	if m.ConsecutiveFails >= config.ConsecutiveFails || failRate >= config.FailRate || m.TimeoutBreak >= config.TimeOutRate {
-		m.IsHealthy = false
+	if m.RequestCount > 0 {
+		m.AvgLatency = m.TotalLatency / time.Duration(m.RequestCount)
 	}
 
 	countRequestLock.Lock()
@@ -62,6 +39,39 @@ func UpdateMetrics(backend string, latency time.Duration, success bool, status i
 	if TotalRequests%updateEvery == 0 {
 		logInforBackend()
 		fmt.Println("Algo current : ", algo.AlgoCurrent)
+	}
+}
+
+func UpdateBackendUnhealthy(backend string, status int) {
+	backendMetric := config.MetricsMap[backend]
+	backendMetric.Mutex.Lock()
+	defer backendMetric.Mutex.Unlock()
+	m := backendMetric.Metrics
+	m.FailureCount++
+	m.ConsecutiveFails++
+	m.LastStatus = status
+	failRate := float64(m.FailureCount) / float64(m.RequestCount)
+	if m.ConsecutiveFails >= config.ConsecutiveFails || failRate >= config.FailRate || m.TimeoutBreak >= config.TimeOutRate {
+		m.IsHealthy = false
+		config.GlobalDB.InsertMetrics(backend, config.Unhealthy, m)
+	}
+}
+
+func UpdateBackendRecovering(backend string) {
+	backendMetric := config.MetricsMap[backend]
+	backendMetric.Mutex.Lock()
+	defer backendMetric.Mutex.Unlock()
+	m := backendMetric.Metrics
+	if m.ConsecutiveSuccess >= config.ConsecutiveSuccess {
+		m.IsHealthy = true
+		m.ConsecutiveFails = 0
+		m.AvgLatency = 0
+		m.TotalLatency = 0
+		m.LastLatency = 0
+		m.TimeoutBreak = 0
+		m.ConsecutiveSuccess = 0
+		m.SuccessCount = 0
+		m.RequestCount = 0
 	}
 }
 

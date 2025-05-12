@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -16,6 +18,14 @@ type DB struct {
 }
 
 var GlobalDB *DB
+
+func GetExecutableDir() string {
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("failed to get executable path: %v", err)
+	}
+	return filepath.Join(filepath.Dir(execPath), "load_balancer.db")
+}
 
 func NewDB(dbPath string) {
 	db, err := sql.Open("sqlite", dbPath)
@@ -63,7 +73,7 @@ func NewDB(dbPath string) {
 	GlobalDB = &DB{conn: db}
 }
 
-func (d *DB) InsertMetrics(backendID, status string, metrics Metrics) error {
+func (d *DB) InsertMetrics(backendID, status string, metrics *Metrics) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -114,7 +124,7 @@ func (d *DB) ReadMetrics() error {
 		var activeConnections, weight, currentWeight int64
 
 		err := rows.Scan(
-			&backendID, &status,
+			&backendID, &status, &timestamp, // Thêm timestamp vào đây
 			&requestCount, &successCount, &failureCount,
 			&totalLatency, &lastLatency, &avgLatency,
 			&lastChecked,
@@ -130,7 +140,7 @@ func (d *DB) ReadMetrics() error {
 			"Backend: %s, Status: %s, Time: %s, RequestCount: %d, SuccessCount: %d, FailureCount: %d, "+
 				"TotalLatency: %d, LastLatency: %d, AvgLatency: %d, LastChecked: %s, "+
 				"ConsecutiveFails: %d, ConsecutiveSuccess: %d, TimeoutBreak: %d, IsHealthy: %v, "+
-				"LastStatus: %d, ActiveConnections: %d, Weight: %d, CurrentWeight: %d, Details: %s",
+				"LastStatus: %d, ActiveConnections: %d, Weight: %d, CurrentWeight: %d, Details: %s\n",
 			backendID, status, timestamp, requestCount, successCount, failureCount,
 			totalLatency, lastLatency, avgLatency, lastChecked,
 			consecutiveFails, consecutiveSuccess, timeoutBreak, isHealthy,

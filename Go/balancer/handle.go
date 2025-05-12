@@ -5,22 +5,12 @@ import (
 	"Go/config"
 	"Go/response"
 	"encoding/json"
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"time"
 )
-
-func UpdateMetricsBackend(backend string, start time.Time, statusCode int) {
-	latency := time.Since(start)
-	success := true
-	if statusCode == 502 {
-		success = false
-	}
-	UpdateMetrics(backend, latency, success, statusCode)
-}
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -37,20 +27,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func UpdateActiveConnection(backend string, state bool) {
-	UpdateActiveConnectionMetrics(backend, state)
-}
-
 func CheckUnhealthyBackend() {
 	for backend, m := range config.MetricsMap {
 		if !m.Metrics.IsHealthy && m.HealthPath != "" {
 			go func(backend string, m *config.BackendMetrics) {
 				url := backend + m.HealthPath
-				start := time.Now()
 
 				resp, err := http.Get(url)
 				if err != nil {
-					fmt.Printf("Failed health check for %s: %v\n", backend, err)
 					return
 				}
 				defer resp.Body.Close()
@@ -59,7 +43,7 @@ func CheckUnhealthyBackend() {
 					m.Mutex.Lock()
 					config.MetricsMap[backend].Metrics.ConsecutiveSuccess++
 					m.Mutex.Unlock()
-					UpdateMetricsBackend(backend, start, resp.StatusCode)
+					UpdateBackendRecovering(backend)
 				}
 			}(backend, m)
 		}
@@ -83,8 +67,8 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 	proxy.Transport = transport
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
-		go UpdateActiveConnection(backend, false)
-		go UpdateMetricsBackend(backend, start, resp.StatusCode)
+		go UpdateActiveConnectionMetrics(backend, false)
+		go UpdateMetrics(backend, time.Since(start), resp.StatusCode)
 		return nil
 	}
 
@@ -94,12 +78,12 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 			config.MetricsMap[backend].Metrics.TimeoutBreak++
 			config.MetricsMap[backend].Mutex.Unlock()
 		}
-		go UpdateActiveConnection(backend, false)
-		go UpdateMetricsBackend(backend, start, 502)
+		go UpdateActiveConnectionMetrics(backend, false)
+		go UpdateBackendUnhealthy(backend, 502)
 	}
 
 	r.Host = url.Host
-	UpdateActiveConnection(url.String(), true)
+	UpdateActiveConnectionMetrics(url.String(), true)
 	proxy.ServeHTTP(w, r)
 }
 

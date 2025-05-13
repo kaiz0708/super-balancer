@@ -55,6 +55,53 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Error History Section -->
+        <div class="mt-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Error History</h2>
+                <button id="toggleErrorHistory" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-xs hover:bg-blue-600 transition">
+                    Hide History
+                </button>
+            </div>
+            <div id="errorHistoryContent" class="overflow-x-auto rounded-lg">
+                <table class="w-full border-separate border-spacing-0 bg-white">
+                    <thead>
+                        <tr>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Backend</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Status</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Time</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Details</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Consecutive Fails</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Timeout Break</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Last Status</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Failure Count</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="error-history">
+                        {{range .Errors}}
+                        <tr class="hover:bg-gray-100 transition-colors">
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">{{.Backend}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">{{.Status}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">{{.Time}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">{{.Details}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{.ConsecutiveFails}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{.TimeoutBreak}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">{{.LastStatus}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{.FailureCount}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">
+                                <button onclick="deleteErrorHistory('{{.ID}}')" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition text-xs">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="flex gap-2 justify-center my-4 flex-col md:flex-row items-center">
             <form id="change-algorithm-form" class="flex flex-col md:flex-row gap-2 w-full max-w-xs md:max-w-full">
                 <select name="name" class="p-2.5 border border-gray-200 rounded-lg text-xs bg-white cursor-pointer focus:outline-none focus:border-blue-500 transition w-full md:w-auto">
@@ -71,6 +118,20 @@
         <div id="feedback-message" class="mt-2 text-center text-xs p-2 rounded-lg hidden"></div>
     </div>
     <script>
+        // Add toggle functionality for Error History
+        const toggleButton = document.getElementById('toggleErrorHistory');
+        const errorHistoryContent = document.getElementById('errorHistoryContent');
+        
+        toggleButton.addEventListener('click', function() {
+            if (errorHistoryContent.style.display === 'none') {
+                errorHistoryContent.style.display = 'block';
+                toggleButton.textContent = 'Hide History';
+            } else {
+                errorHistoryContent.style.display = 'none';
+                toggleButton.textContent = 'Show History';
+            }
+        });
+
         document.getElementById('change-algorithm-form').addEventListener('submit', async function(event) {
             event.preventDefault();
             
@@ -106,6 +167,72 @@
                 feedbackMessage.classList.add('hidden');
             }, 3000);
         });
+
+        // Function to update error history
+        async function updateErrorHistory() {
+            try {
+                const response = await fetch('/error-history', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer your-secret-token'
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const tbody = document.getElementById('error-history');
+                    tbody.innerHTML = data.map(error => `
+                        <tr class="hover:bg-gray-100 transition-colors">
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">${error.Backend}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">${error.Status}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">${error.Time}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">${error.Details}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">${error.ConsecutiveFails}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">${error.TimeoutBreak}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">${error.LastStatus}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">${error.FailureCount}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">
+                                <button onclick="deleteErrorHistory('${error.ID}')" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition text-xs">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error fetching error history:', error);
+            }
+        }
+
+        // Function to delete error history
+        async function deleteErrorHistory(id) {
+            if (!confirm('Are you sure you want to delete this error history?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/delete-error-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer your-secret-token'
+                    },
+                    body: JSON.stringify({
+                        id: parseInt(id)
+                    })
+                });
+
+                if (response.ok) {
+                    updateErrorHistory();
+                } else {
+                    throw new Error('Failed to delete error history');
+                }
+            } catch (error) {
+                console.error('Error deleting error history:', error);
+                alert('Failed to delete error history');
+            }
+        }
     </script>
 </body>
 </html>

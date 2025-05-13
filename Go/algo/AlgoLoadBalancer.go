@@ -18,8 +18,8 @@ func ChooseAlgorithm(state string) string {
 		AlgoCurrent = "HighLatency"
 		selected = custom.CustomLowLatency()
 	default:
-		AlgoCurrent = config.LoadBalancerDefault
-		selected = AlgoLoadBalancer(config.LoadBalancerDefault)
+		AlgoCurrent = config.ConfigSystem.Algorithm
+		selected = AlgoLoadBalancer(config.ConfigSystem.Algorithm)
 	}
 	return selected
 }

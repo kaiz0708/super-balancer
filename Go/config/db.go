@@ -101,51 +101,58 @@ func (d *DB) InsertMetrics(backendID, status string, metrics *Metrics) error {
 	return nil
 }
 
-func (d *DB) ReadMetrics() error {
+type ErrorBackend struct {
+	ID               int64
+	Backend          string
+	Time             time.Time
+	Status           string
+	Details          string
+	ConsecutiveFails int
+	TimeoutBreak     int
+	LastStatus       int
+	FailureCount     int
+}
+
+func (d *DB) ReadMetrics() []ErrorBackend {
 	rows, err := d.conn.Query(`
-		SELECT backend_id, status, timestamp, request_count, success_count, failure_count,
-		       total_latency, last_latency, avg_latency, last_checked,
-		       consecutive_fails, consecutive_success, timeout_break,
-		       is_healthy, last_status, active_connections, weight, current_weight, details
+		SELECT id, backend_id, status, timestamp, failure_count,
+		    consecutive_fails, timeout_break,
+		    last_status, details
 		FROM backend_metrics
 	`)
 	if err != nil {
-		return fmt.Errorf("failed to query metrics: %v", err)
+		fmt.Println("failed to query metrics: ", err)
 	}
 	defer rows.Close()
 
-	for rows.Next() {
-		var backendID, status, timestamp, details string
-		var requestCount, successCount, failureCount, totalLatency, lastLatency, avgLatency uint64
-		var lastChecked time.Time
-		var consecutiveFails, consecutiveSuccess, timeoutBreak uint64
-		var isHealthy bool
-		var lastStatus int
-		var activeConnections, weight, currentWeight int64
+	metricsMap := []ErrorBackend{}
 
+	for rows.Next() {
+		var e ErrorBackend
 		err := rows.Scan(
-			&backendID, &status, &timestamp, // Thêm timestamp vào đây
-			&requestCount, &successCount, &failureCount,
-			&totalLatency, &lastLatency, &avgLatency,
-			&lastChecked,
-			&consecutiveFails, &consecutiveSuccess, &timeoutBreak,
-			&isHealthy, &lastStatus, &activeConnections,
-			&weight, &currentWeight, &details,
+			&e.ID,
+			&e.Backend, &e.Status, &e.Time, &e.FailureCount,
+			&e.ConsecutiveFails, &e.TimeoutBreak, &e.LastStatus, &e.Details,
 		)
 		if err != nil {
-			return fmt.Errorf("failed to scan row: %v", err)
+			fmt.Println("failed to scan error row: ", err)
 		}
-
-		fmt.Printf(
-			"Backend: %s, Status: %s, Time: %s, RequestCount: %d, SuccessCount: %d, FailureCount: %d, "+
-				"TotalLatency: %d, LastLatency: %d, AvgLatency: %d, LastChecked: %s, "+
-				"ConsecutiveFails: %d, ConsecutiveSuccess: %d, TimeoutBreak: %d, IsHealthy: %v, "+
-				"LastStatus: %d, ActiveConnections: %d, Weight: %d, CurrentWeight: %d, Details: %s\n",
-			backendID, status, timestamp, requestCount, successCount, failureCount,
-			totalLatency, lastLatency, avgLatency, lastChecked,
-			consecutiveFails, consecutiveSuccess, timeoutBreak, isHealthy,
-			lastStatus, activeConnections, weight, currentWeight, details,
-		)
+		metricsMap = append(metricsMap, e)
 	}
-	return rows.Err()
+	return metricsMap
+}
+
+func (d *DB) DeleteErrorHistory(id int64) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	_, err := d.conn.Exec(`
+		DELETE FROM backend_metrics 
+		WHERE id = ?
+	`, id)
+	
+	if err != nil {
+		return fmt.Errorf("failed to delete error history: %v", err)
+	}
+	return nil
 }

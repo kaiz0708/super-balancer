@@ -12,18 +12,21 @@ import (
 type MetricsPageData struct {
 	Backends  map[string]*config.BackendMetrics
 	Algorithm string
+	Errors    []config.ErrorBackend
 }
 
 //go:embed templates/*
 var templates embed.FS
 
 func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
+	errors := config.GlobalDB.ReadMetrics()
 	data := MetricsPageData{
 		Backends:  config.MetricsMap,
-		Algorithm: config.LoadBalancerDefault,
+		Algorithm: config.ConfigSystem.Algorithm,
+		Errors:    errors,
 	}
 
-	if !config.ActiveLogin {
+	if !config.ConfigSystem.ActiveLogin {
 		tmpl, err := template.ParseFS(templates, "templates/login.html")
 		if err != nil {
 			fmt.Println("Error parsing template:", err)

@@ -9,7 +9,7 @@ var countRequest uint64
 
 func RoundRobin() string {
 	metrics := config.MetricsMap
-	backend := config.BackendServers
+	backend := config.ConfigSystem.Servers
 	n := len(backend)
 
 	if n == 0 {

@@ -19,8 +19,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.FormValue("username")
 	password := r.FormValue("password")
-	if username == config.AuthConfig.Username && password == config.AuthConfig.Password {
-		config.ActiveLogin = true
+	if username == config.ConfigSystem.AuthConfig.Username && password == config.ConfigSystem.AuthConfig.Password {
+		config.ConfigSystem.ActiveLogin = true
 		http.Redirect(w, r, "/metrics", http.StatusSeeOther)
 	} else {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
@@ -54,7 +54,7 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 	url, err := url.Parse(backend)
 
 	transport := &http.Transport{
-		ResponseHeaderTimeout: time.Duration(config.TimeOutDelay) * time.Second,
+		ResponseHeaderTimeout: time.Duration(config.ConfigSystem.TimeOutDelay) * time.Second,
 	}
 
 	if err != nil {
@@ -90,9 +90,44 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 func ChangeAlgoLoadBalancer(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 
-	config.LoadBalancerDefault = name
+	config.ConfigSystem.Algorithm = name
 
 	json.NewEncoder(w).Encode(name)
+}
+
+func DeleteErrorHistory(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var request struct {
+		ID int64 `json:"id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := config.GlobalDB.DeleteErrorHistory(request.ID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+}
+
+func GetErrorHistory(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	errors := config.GlobalDB.ReadMetrics()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(errors)
 }
 
 func StartHealthCheck(interval time.Duration) {

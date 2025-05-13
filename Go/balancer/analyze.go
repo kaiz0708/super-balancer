@@ -2,7 +2,6 @@ package balancer
 
 import (
 	"Go/config"
-	"time"
 )
 
 func AnalyzeSystemState() string {
@@ -12,10 +11,10 @@ func AnalyzeSystemState() string {
 	totalBackends := len(backends)
 
 	for _, backend := range backends {
-		if backend.Metrics.IsHealthy && backend.Metrics.ConsecutiveFails <= config.ConsecutiveFails {
+		if backend.Metrics.IsHealthy && backend.Metrics.ConsecutiveFails <= config.ConfigSystem.ConsecutiveFails {
 			healthyCount++
 		}
-		if backend.Metrics.AvgLatency >= 1*time.Second || backend.Metrics.TimeoutBreak >= config.TimeOutRate {
+		if backend.Metrics.TimeoutBreak >= config.ConfigSystem.TimeOutRate {
 			highLatencyCount++
 		}
 	}
@@ -26,7 +25,7 @@ func AnalyzeSystemState() string {
 	if float64(healthyCount)/float64(totalBackends) <= 0.5 {
 		return "ManyFailed"
 	}
-	if highLatencyCount > 1 {
+	if highLatencyCount >= 1 {
 		return "HighLatency"
 	}
 

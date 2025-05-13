@@ -12,8 +12,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/go-playground/validator/v10"
 )
 
 func main() {
@@ -84,49 +82,34 @@ func main() {
 		return
 	}
 
-	var cfg config.Config
-	cfg.DefaultProxy = *defaultProxy
-	cfg.Algorithm = *algorithm
-
-	if err := json.Unmarshal([]byte(*backends), &cfg.Servers); err != nil {
+	if err := json.Unmarshal([]byte(*backends), &config.ConfigSystem.Servers); err != nil {
 		fmt.Println("Failed to parse backends:", err)
 		os.Exit(1)
 	}
 
-	if err := json.Unmarshal([]byte(*auth), &config.AuthConfig); err != nil {
+	if err := json.Unmarshal([]byte(*auth), &config.ConfigSystem.AuthConfig); err != nil {
 		fmt.Println("Failed to parse auth:", err)
 		os.Exit(1)
 	}
 
-	validate := validator.New()
-	err = validate.Struct(cfg)
-	if err != nil {
-		for _, fieldErr := range err.(validator.ValidationErrors) {
-			fmt.Printf("Invalid field: %s\n", fieldErr.StructNamespace())
-		}
-		os.Exit(1)
-	}
-
-	config.BackendServers = append(config.BackendServers, cfg.Servers...)
-	config.LoadBalancerDefault = cfg.Algorithm
-	config.ConsecutiveFails = consecutiveFailsValue
-	config.ConsecutiveSuccess = consecutiveSuccessValue
-	config.FailRate = faileRateValue
-	config.TimeOutRate = timeOutBreakValue
-	config.TimeOutDelay = timeOutDelayValue
-	config.ActiveLogin = false
-	if err != nil {
-		fmt.Println("Lỗi chuyển đổi:", err)
-		return
-	}
+	config.ConfigSystem.DefaultProxy = *defaultProxy
+	config.ConfigSystem.Algorithm = *algorithm
+	config.ConfigSystem.ConsecutiveFails = consecutiveFailsValue
+	config.ConfigSystem.ConsecutiveSuccess = consecutiveSuccessValue
+	config.ConfigSystem.FailRate = faileRateValue
+	config.ConfigSystem.TimeOutRate = timeOutBreakValue
+	config.ConfigSystem.TimeOutDelay = timeOutDelayValue
+	config.ConfigSystem.ActiveLogin = false
 	config.NewDB(config.GetExecutableDir())
 	config.InitServer()
 	balancer.StartHealthCheck(1 * time.Second)
-	http.HandleFunc(cfg.DefaultProxy, balancer.Handler)
-	http.HandleFunc(cfg.DefaultProxy+"change-load-balancer", balancer.ChangeAlgoLoadBalancer)
-	http.HandleFunc(cfg.DefaultProxy+"test", test.SpamRequests)
+	http.HandleFunc(config.ConfigSystem.DefaultProxy, balancer.Handler)
+	http.HandleFunc(config.ConfigSystem.DefaultProxy+"change-load-balancer", balancer.ChangeAlgoLoadBalancer)
+	http.HandleFunc(config.ConfigSystem.DefaultProxy+"test", test.SpamRequests)
 	http.HandleFunc("/metrics", response.HandleStatusHTML)
 	http.HandleFunc("/login-metrics", balancer.Login)
+	http.HandleFunc("/delete-error-history", balancer.DeleteErrorHistory)
+	http.HandleFunc("/error-history", balancer.GetErrorHistory)
 	fmt.Println("🚀 Load balancer running on :8080")
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

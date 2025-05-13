@@ -12,9 +12,9 @@ const (
 	WeightedRoundRobin      = "WEIGHTED_ROUND_ROBIN"
 	RandomAlgo              = "RANDOM"
 	WeightedRandom          = "WEIGHTED_RANDOM"
-	Unhealthy               = "UNHEALTHY"
-	Recovery                = "RECOVERY"
-	Healthy                 = "HEALTHY"
+	Unhealthy               = "unhealthy"
+	Recovery                = "recovery"
+	Healthy                 = "healthy"
 )
 
 type Metrics struct {
@@ -53,33 +53,24 @@ type BackendMetrics struct {
 }
 
 type Config struct {
-	DefaultProxy string          `json:"defaultProxy" validate:"required"`
-	Algorithm    string          `json:"algorithm" validate:"required"`
-	Servers      []BackendConfig `json:"servers" validate:"required,dive"`
+	DefaultProxy       string
+	Algorithm          string
+	Servers            []BackendConfig
+	ConsecutiveFails   uint64
+	ConsecutiveSuccess uint64
+	FailRate           float64
+	TimeOutRate        uint64
+	TimeOutDelay       uint64
+	ActiveLogin        bool
+	AuthConfig         AuthBasic
 }
 
 var MetricsMap = map[string]*BackendMetrics{}
 
-var LoadBalancerDefault string
-
-var ConsecutiveFails uint64
-
-var ConsecutiveSuccess uint64
-
-var FailRate float64
-
-var TimeOutRate uint64
-
-var TimeOutDelay uint64
-
-var ActiveLogin bool
-
-var AuthConfig AuthBasic
-
-var BackendServers = []BackendConfig{}
+var ConfigSystem Config
 
 func InitServer() {
-	urls := BackendServers
+	urls := ConfigSystem.Servers
 	for _, url := range urls {
 		MetricsMap[url.UrlConfig] = &BackendMetrics{
 			Metrics: &Metrics{

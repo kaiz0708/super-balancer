@@ -144,7 +144,7 @@ func StartHealthCheck(interval time.Duration) {
 func Handler(w http.ResponseWriter, r *http.Request) {
 	CheckUnhealthyBackend()
 	pickState := AnalyzeSystemState()
-	if pickState == "AllFailed" {
+	if pickState == config.AllFailed {
 		response.CustomAllFailed(w)
 		return
 	}

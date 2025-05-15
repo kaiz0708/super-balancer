@@ -28,18 +28,6 @@ func main() {
 
 	flag.Parse()
 
-	fmt.Println("========== Flag Values =========")
-	fmt.Println("defaultProxy:", *defaultProxy)
-	fmt.Println("algorithm:", *algorithm)
-	fmt.Println("backends:", *backends)
-	fmt.Println("consecutiveFails:", *consecutiveFails)
-	fmt.Println("consecutiveSuccess:", *consecutiveSuccess)
-	fmt.Println("failRate:", *failRate)
-	fmt.Println("timeOutBreak:", *timeOutBreak)
-	fmt.Println("timeOutDelay:", *timeOutDelay)
-
-	fmt.Println("auth", *auth)
-
 	if *defaultProxy == "" ||
 		*algorithm == "" ||
 		*backends == "" ||
@@ -111,7 +99,7 @@ func main() {
 	http.HandleFunc("/delete-error-history", balancer.DeleteErrorHistory)
 	http.HandleFunc("/error-history", balancer.GetErrorHistory)
 	fmt.Println("🚀 Load balancer running on :8080")
-	err = http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(config.ConfigSystem.DefaultProxy, nil)
 	if err != nil {
 		fmt.Println("❌ Server failed to start:", err)
 		os.Exit(1)

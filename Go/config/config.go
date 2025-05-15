@@ -12,9 +12,13 @@ const (
 	WeightedRoundRobin      = "WEIGHTED_ROUND_ROBIN"
 	RandomAlgo              = "RANDOM"
 	WeightedRandom          = "WEIGHTED_RANDOM"
-	Unhealthy               = "unhealthy"
-	Recovery                = "recovery"
-	Healthy                 = "healthy"
+	Unhealthy               = "Unhealthy"
+	Recovery                = "Recovery"
+	Healthy                 = "Healthy"
+	AllFailed               = "AllFailed"
+	ManyFailed              = "ManyFailed"
+	HighLatency             = "HighLatency"
+	Stable                  = "Stable"
 )
 
 type Metrics struct {

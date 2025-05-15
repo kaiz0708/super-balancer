@@ -33,7 +33,6 @@ func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Error rendering page", http.StatusInternalServerError)
 			return
 		}
-
 		w.Header().Set("Content-Type", "text/html")
 		err = tmpl.Execute(w, "")
 		if err != nil {

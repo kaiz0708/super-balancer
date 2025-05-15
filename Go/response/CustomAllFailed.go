@@ -9,7 +9,7 @@ import (
 func CustomAllFailed(w http.ResponseWriter) {
 	errorResponse := map[string]interface{}{
 		"status":    503,
-		"message":   "Tất cả backend hiện tại đều không thể truy cập. Xin thử lại sau.",
+		"message":   "All backends can not access. Please try later.",
 		"timestamp": time.Now().Format(time.RFC3339),
 	}
 	w.Header().Set("Content-Type", "application/json")

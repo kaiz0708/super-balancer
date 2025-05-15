@@ -1,10 +1,7 @@
 package balancer
 
 import (
-	"Go/algo"
 	"Go/config"
-	"encoding/json"
-	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -12,8 +9,6 @@ import (
 
 var countRequestLock sync.Mutex
 var TotalRequests uint64 = 0
-
-const updateEvery = 100
 
 func UpdateMetrics(backend string, latency time.Duration, status int) {
 	backendMetric := config.MetricsMap[backend]
@@ -35,11 +30,6 @@ func UpdateMetrics(backend string, latency time.Duration, status int) {
 	countRequestLock.Lock()
 	TotalRequests++
 	countRequestLock.Unlock()
-
-	if TotalRequests%updateEvery == 0 {
-		logInforBackend()
-		fmt.Println("Algo current : ", algo.AlgoCurrent)
-	}
 }
 
 func UpdateBackendUnhealthy(backend string, status int) {
@@ -74,11 +64,6 @@ func UpdateBackendRecovering(backend string) {
 		m.RequestCount = 1
 		m.FailureCount = 0
 	}
-}
-
-func logInforBackend() {
-	data, _ := json.Marshal(config.MetricsMap)
-	fmt.Println("Log backends infor : ", string(data))
 }
 
 func UpdateActiveConnectionMetrics(backend string, state bool) {

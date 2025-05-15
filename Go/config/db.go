@@ -38,21 +38,10 @@ func NewDB(dbPath string) {
 			backend_id TEXT NOT NULL,
 			status TEXT NOT NULL, -- "healthy" hoặc "recovered"
 			timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-			request_count INTEGER,
-			success_count INTEGER,
 			failure_count INTEGER,
-			total_latency INTEGER, -- Nanoseconds
-			last_latency INTEGER,
-			avg_latency INTEGER,
-			last_checked DATETIME,
 			consecutive_fails INTEGER,
-			consecutive_success INTEGER,
 			timeout_break INTEGER,
-			is_healthy BOOLEAN,
 			last_status INTEGER,
-			active_connections INTEGER,
-			weight INTEGER,
-			current_weight INTEGER,
 			details TEXT
 		)
 	`)
@@ -79,19 +68,16 @@ func (d *DB) InsertMetrics(backendID, status string, metrics *Metrics) error {
 
 	_, err := d.conn.Exec(`
 		INSERT INTO backend_metrics (
-			backend_id, status, request_count, success_count, failure_count,
-			total_latency, last_latency, avg_latency, last_checked,
+			backend_id, status, failure_count,
 			consecutive_fails, consecutive_success, timeout_break,
-			is_healthy, last_status, active_connections, weight, current_weight, details
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			last_status, details
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`,
 		backendID, status,
-		metrics.RequestCount, metrics.SuccessCount, metrics.FailureCount,
-		metrics.TotalLatency.Nanoseconds(), metrics.LastLatency.Nanoseconds(), metrics.AvgLatency.Nanoseconds(),
+		metrics.FailureCount,
 		metrics.LastChecked,
-		metrics.ConsecutiveFails, metrics.ConsecutiveSuccess, metrics.TimeoutBreak,
-		metrics.IsHealthy, metrics.LastStatus, metrics.ActiveConnections,
-		metrics.Weight, metrics.CurrentWeight,
+		metrics.ConsecutiveFails, metrics.TimeoutBreak,
+		metrics.LastStatus,
 		fmt.Sprintf("Backend %s is %s", backendID, status),
 	)
 	if err != nil {
@@ -150,7 +136,7 @@ func (d *DB) DeleteErrorHistory(id int64) error {
 		DELETE FROM backend_metrics 
 		WHERE id = ?
 	`, id)
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to delete error history: %v", err)
 	}

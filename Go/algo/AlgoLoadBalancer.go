@@ -11,11 +11,11 @@ var AlgoCurrent string
 func ChooseAlgorithm(state string) string {
 	selected := ""
 	switch state {
-	case "ManyFailed":
-		AlgoCurrent = "ManyFailed"
+	case config.ManyFailed:
+		AlgoCurrent = config.ManyFailed
 		selected = custom.CustomManyFailed()
-	case "HighLatency":
-		AlgoCurrent = "HighLatency"
+	case config.HighLatency:
+		AlgoCurrent = config.HighLatency
 		selected = custom.CustomLowLatency()
 	default:
 		AlgoCurrent = config.ConfigSystem.Algorithm

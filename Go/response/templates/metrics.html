@@ -118,7 +118,7 @@
         <div id="feedback-message" class="mt-2 text-center text-xs p-2 rounded-lg hidden"></div>
     </div>
     <script>
-        // Add toggle functionality for Error History
+
         const toggleButton = document.getElementById('toggleErrorHistory');
         const errorHistoryContent = document.getElementById('errorHistoryContent');
         
@@ -168,7 +168,6 @@
             }, 3000);
         });
 
-        // Function to update error history
         async function updateErrorHistory() {
             try {
                 const response = await fetch('/error-history', {
@@ -205,7 +204,6 @@
             }
         }
 
-        // Function to delete error history
         async function deleteErrorHistory(id) {
             if (!confirm('Are you sure you want to delete this error history?')) {
                 return;

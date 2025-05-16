@@ -67,8 +67,8 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 	proxy.Transport = transport
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
-		go UpdateActiveConnectionMetrics(backend, false)
-		go UpdateMetrics(backend, time.Since(start), resp.StatusCode)
+		UpdateActiveConnectionMetrics(backend, false)
+		UpdateMetrics(backend, time.Since(start), resp.StatusCode)
 		return nil
 	}
 
@@ -78,8 +78,8 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 			config.MetricsMap[backend].Metrics.TimeoutBreak++
 			config.MetricsMap[backend].Mutex.Unlock()
 		}
-		go UpdateActiveConnectionMetrics(backend, false)
-		go UpdateBackendUnhealthy(backend, 502)
+		UpdateActiveConnectionMetrics(backend, false)
+		UpdateBackendUnhealthy(backend, 502)
 	}
 
 	r.Host = url.Host

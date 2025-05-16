@@ -41,7 +41,7 @@ func UpdateBackendUnhealthy(backend string, status int) {
 	m.ConsecutiveFails++
 	m.LastStatus = status
 	failRate := float64(m.FailureCount) / float64(m.RequestCount)
-	if m.ConsecutiveFails >= config.ConfigSystem.ConsecutiveFails || failRate >= config.ConfigSystem.FailRate || m.TimeoutBreak >= config.ConfigSystem.TimeOutRate {
+	if (m.ConsecutiveFails >= config.ConfigSystem.ConsecutiveFails || failRate >= config.ConfigSystem.FailRate || m.TimeoutBreak >= config.ConfigSystem.TimeOutRate) && m.IsHealthy {
 		m.IsHealthy = false
 		config.GlobalDB.InsertMetrics(backend, config.Unhealthy, m)
 	}
@@ -52,7 +52,7 @@ func UpdateBackendRecovering(backend string) {
 	backendMetric.Mutex.Lock()
 	defer backendMetric.Mutex.Unlock()
 	m := backendMetric.Metrics
-	if m.ConsecutiveSuccess >= config.ConfigSystem.ConsecutiveSuccess {
+	if m.ConsecutiveSuccess >= config.ConfigSystem.ConsecutiveSuccess && !m.IsHealthy {
 		m.IsHealthy = true
 		m.ConsecutiveFails = 0
 		m.AvgLatency = 0

@@ -69,14 +69,14 @@ func (d *DB) InsertMetrics(backendID, status string, metrics *Metrics) error {
 	_, err := d.conn.Exec(`
 		INSERT INTO backend_metrics (
 			backend_id, status, failure_count,
-			consecutive_fails, consecutive_success, timeout_break,
+			consecutive_fails, timeout_break,
 			last_status, details
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		) VALUES (?, ?, ?, ?, ?, ?, ?)
 	`,
 		backendID, status,
 		metrics.FailureCount,
-		metrics.LastChecked,
-		metrics.ConsecutiveFails, metrics.TimeoutBreak,
+		metrics.ConsecutiveFails,
+		metrics.TimeoutBreak,
 		metrics.LastStatus,
 		fmt.Sprintf("Backend %s is %s", backendID, status),
 	)

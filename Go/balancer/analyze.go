@@ -20,14 +20,18 @@ func AnalyzeSystemState() string {
 	}
 
 	if healthyCount == 0 {
+		config.StateSystem = config.AllFailed
 		return config.AllFailed
 	}
 	if healthyCount <= totalBackends/2 {
+		config.StateSystem = config.ManyFailed
 		return config.ManyFailed
 	}
-	if highLatencyCount >= totalBackends {
+	if highLatencyCount >= totalBackends/2 {
+		config.StateSystem = config.HighLatency
 		return config.HighLatency
 	}
+	config.StateSystem = config.Stable
 
 	return config.Stable
 }

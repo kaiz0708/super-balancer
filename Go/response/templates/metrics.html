@@ -9,6 +9,17 @@
 <body class="font-inter bg-gray-100 text-gray-700 leading-7 p-4 text-sm">
     <div class="max-w-6xl mx-auto bg-white rounded-2xl p-6 shadow-sm">
         <h1 class="text-center text-gray-700 text-2xl font-semibold mb-6 tracking-wide">Load Balancer Metrics</h1>
+        
+        <!-- System Status Section -->
+        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-gray-700">System Status</h2>
+                <span class="inline-block px-3 py-1 rounded-full font-medium text-sm {{if eq .State "RUNNING"}}bg-green-500 text-white{{else if eq .State "STOPPED"}}bg-red-500 text-white{{else if eq .State "PAUSED"}}bg-yellow-500 text-white{{else}}bg-gray-500 text-white{{end}}">
+                    {{.State}}
+                </span>
+            </div>
+        </div>
+
         <div class="overflow-x-auto rounded-lg mt-4">
             <table class="w-full border-separate border-spacing-0 bg-white">
                 <thead>

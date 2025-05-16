@@ -20,7 +20,7 @@ func SumWeightMetrics() int64 {
 	return int64(sumWeight)
 }
 
-func CustomLowLatency() string {
+func LowLatencyWeightedBalancer() string {
 	metrics := config.MetricsMap
 	selected := ""
 	minLatency := time.Duration(math.MaxInt64)

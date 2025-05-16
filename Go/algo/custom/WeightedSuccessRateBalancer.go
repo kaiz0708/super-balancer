@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-func CustomManyFailed() string {
+func WeightedSuccessRateBalancer() string {
 	metrics := config.MetricsMap
 	selected := ""
 	highestScore := -1.0

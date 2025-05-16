@@ -1,7 +1,6 @@
 package main
 
 import (
-	test "Go/TestRequest"
 	"Go/balancer"
 	"Go/config"
 	"Go/response"
@@ -15,8 +14,6 @@ import (
 )
 
 func main() {
-
-	defaultProxy := flag.String("defaultProxy", "", "Default proxy path")
 	algorithm := flag.String("algorithm", "", "Load balancing algorithm")
 	backends := flag.String("backends", "", "JSON array of backend servers")
 	consecutiveFails := flag.String("consecutiveFails", "", "Set up amount consecutiveFails")
@@ -28,8 +25,7 @@ func main() {
 
 	flag.Parse()
 
-	if *defaultProxy == "" ||
-		*algorithm == "" ||
+	if *algorithm == "" ||
 		*backends == "" ||
 		*consecutiveFails == "" ||
 		*consecutiveSuccess == "" ||
@@ -80,7 +76,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	config.ConfigSystem.DefaultProxy = *defaultProxy
 	config.ConfigSystem.Algorithm = *algorithm
 	config.ConfigSystem.ConsecutiveFails = consecutiveFailsValue
 	config.ConfigSystem.ConsecutiveSuccess = consecutiveSuccessValue
@@ -91,15 +86,14 @@ func main() {
 	config.NewDB(config.GetExecutableDir())
 	config.InitServer()
 	balancer.StartHealthCheck(1 * time.Second)
-	http.HandleFunc(config.ConfigSystem.DefaultProxy, balancer.Handler)
-	http.HandleFunc(config.ConfigSystem.DefaultProxy+"change-load-balancer", balancer.ChangeAlgoLoadBalancer)
-	http.HandleFunc(config.ConfigSystem.DefaultProxy+"test", test.SpamRequests)
+	http.HandleFunc("/", balancer.Handler)
+	http.HandleFunc("/change-load-balancer", balancer.ChangeAlgoLoadBalancer)
 	http.HandleFunc("/metrics", response.HandleStatusHTML)
 	http.HandleFunc("/login-metrics", balancer.Login)
 	http.HandleFunc("/delete-error-history", balancer.DeleteErrorHistory)
 	http.HandleFunc("/error-history", balancer.GetErrorHistory)
 	fmt.Println("🚀 Load balancer running on :8080")
-	err = http.ListenAndServe(config.ConfigSystem.DefaultProxy, nil)
+	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println("❌ Server failed to start:", err)
 		os.Exit(1)

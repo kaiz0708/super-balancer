@@ -6,19 +6,21 @@ import (
 )
 
 const (
-	RoundRobinAlgo          = "ROUND_ROBIN"
-	LeastConnectionAlgo     = "LEAST_CONNECTION"
-	WeightedLeastConnection = "WEIGHTED_LEAST_CONNECTION"
-	WeightedRoundRobin      = "WEIGHTED_ROUND_ROBIN"
-	RandomAlgo              = "RANDOM"
-	WeightedRandom          = "WEIGHTED_RANDOM"
-	Unhealthy               = "Unhealthy"
-	Recovery                = "Recovery"
-	Healthy                 = "Healthy"
-	AllFailed               = "AllFailed"
-	ManyFailed              = "ManyFailed"
-	HighLatency             = "HighLatency"
-	Stable                  = "Stable"
+	RoundRobinAlgo              = "ROUND_ROBIN"
+	LeastConnectionAlgo         = "LEAST_CONNECTION"
+	WeightedLeastConnection     = "WEIGHTED_LEAST_CONNECTION"
+	WeightedRoundRobin          = "WEIGHTED_ROUND_ROBIN"
+	RandomAlgo                  = "RANDOM"
+	WeightedRandom              = "WEIGHTED_RANDOM"
+	WeightedSuccessRateBalancer = "WEIGHTED_SUCCESS_RATE_BALANCER"
+	LowLatencyWeightedBalancer  = "LOW_LATENCY_WEIGHTED_BALANCER"
+	Unhealthy                   = "Unhealthy"
+	Recovery                    = "Recovery"
+	Healthy                     = "Healthy"
+	AllFailed                   = "AllFailed"
+	ManyFailed                  = "ManyFailed"
+	HighLatency                 = "HighLatency"
+	Stable                      = "Stable"
 )
 
 type Metrics struct {
@@ -57,7 +59,6 @@ type BackendMetrics struct {
 }
 
 type Config struct {
-	DefaultProxy       string
 	Algorithm          string
 	Servers            []BackendConfig
 	ConsecutiveFails   uint64
@@ -73,7 +74,10 @@ var MetricsMap = map[string]*BackendMetrics{}
 
 var ConfigSystem Config
 
+var StateSystem string
+
 func InitServer() {
+	StateSystem = Stable
 	urls := ConfigSystem.Servers
 	for _, url := range urls {
 		MetricsMap[url.UrlConfig] = &BackendMetrics{

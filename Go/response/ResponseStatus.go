@@ -13,6 +13,7 @@ type MetricsPageData struct {
 	Backends  map[string]*config.BackendMetrics
 	Algorithm string
 	Errors    []config.ErrorBackend
+	State     string
 }
 
 //go:embed templates/*
@@ -24,6 +25,7 @@ func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
 		Backends:  config.MetricsMap,
 		Algorithm: config.ConfigSystem.Algorithm,
 		Errors:    errors,
+		State:     config.StateSystem,
 	}
 
 	if !config.ConfigSystem.ActiveLogin {

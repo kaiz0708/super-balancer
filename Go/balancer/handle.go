@@ -148,6 +148,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		response.CustomAllFailed(w)
 		return
 	}
-	target := algo.ChooseAlgorithm(pickState)
+	target := algo.ChooseAlgorithm(pickState, r)
 	HttpProxy(target, w, r)
 }

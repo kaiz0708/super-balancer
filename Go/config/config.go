@@ -14,6 +14,7 @@ const (
 	WeightedRandom              = "WEIGHTED_RANDOM"
 	WeightedSuccessRateBalancer = "WEIGHTED_SUCCESS_RATE_BALANCER"
 	LowLatencyWeightedBalancer  = "LOW_LATENCY_WEIGHTED_BALANCER"
+	IpHash                      = "IP_HASH"
 	Unhealthy                   = "Unhealthy"
 	Recovery                    = "Recovery"
 	Healthy                     = "Healthy"

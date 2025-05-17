@@ -4,11 +4,12 @@ import (
 	"Go/algo/custom"
 	algo_default "Go/algo/defaults"
 	"Go/config"
+	"net/http"
 )
 
 var AlgoCurrent string
 
-func ChooseAlgorithm(state string) string {
+func ChooseAlgorithm(state string, r *http.Request) string {
 	selected := ""
 	switch state {
 	case config.ManyFailed:
@@ -19,12 +20,12 @@ func ChooseAlgorithm(state string) string {
 		selected = custom.LowLatencyWeightedBalancer()
 	default:
 		AlgoCurrent = config.ConfigSystem.Algorithm
-		selected = AlgoLoadBalancer(config.ConfigSystem.Algorithm)
+		selected = AlgoLoadBalancer(config.ConfigSystem.Algorithm, r)
 	}
 	return selected
 }
 
-func AlgoLoadBalancer(algo string) string {
+func AlgoLoadBalancer(algo string, r *http.Request) string {
 	selected := ""
 	switch algo {
 	case config.RoundRobinAlgo:
@@ -44,6 +45,9 @@ func AlgoLoadBalancer(algo string) string {
 
 	case config.WeightedRandom:
 		selected = algo_default.WeightedRandom()
+
+	case config.IpHash:
+		selected = algo_default.IpHash(r)
 
 	default:
 		selected = algo_default.RoundRobin()

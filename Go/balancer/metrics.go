@@ -56,6 +56,7 @@ func UpdateBackendUnhealthy(backend string, status int) {
 	m := backendMetric.Metrics
 	m.FailureCount++
 	m.ConsecutiveFails++
+	m.RequestCount++
 	m.LastStatus = status
 	failRate := float64(m.FailureCount) / float64(m.RequestCount)
 	if (m.ConsecutiveFails >= config.ConfigSystem.ConsecutiveFails || failRate >= config.ConfigSystem.FailRate || m.TimeoutBreak >= config.ConfigSystem.TimeOutRate) && m.IsHealthy {

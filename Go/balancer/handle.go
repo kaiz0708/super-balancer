@@ -4,13 +4,17 @@ import (
 	"Go/algo"
 	"Go/config"
 	"Go/response"
+	"context"
 	"encoding/json"
-	"net"
+	"errors"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"sync"
 	"time"
 )
+
+var mutexTimeOutRate sync.Mutex
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -73,10 +77,10 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 	}
 
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-			config.MetricsMap[backend].Mutex.Lock()
+		if errors.Is(err, context.Canceled) {
+			mutexTimeOutRate.Lock()
 			config.MetricsMap[backend].Metrics.TimeoutBreak++
-			config.MetricsMap[backend].Mutex.Unlock()
+			mutexTimeOutRate.Unlock()
 		}
 		UpdateActiveConnectionMetrics(backend, false)
 		UpdateBackendUnhealthy(backend, 502)

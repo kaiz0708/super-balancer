@@ -7,10 +7,12 @@ import (
 	"net/http"
 )
 
-var AlgoCurrent string
-
 func ChooseAlgorithm(state string, r *http.Request) string {
 	selected := ""
+	if !config.ConfigSystem.SmartMode {
+		selected = AlgoLoadBalancer(config.ConfigSystem.Algorithm, r)
+		return selected
+	}
 	switch state {
 	case config.ManyFailed:
 		config.ConfigSystem.Algorithm = config.WeightedSuccessRateBalancer
@@ -19,7 +21,6 @@ func ChooseAlgorithm(state string, r *http.Request) string {
 		config.ConfigSystem.Algorithm = config.LowLatencyWeightedBalancer
 		selected = custom.LowLatencyWeightedBalancer()
 	default:
-		AlgoCurrent = config.ConfigSystem.Algorithm
 		selected = AlgoLoadBalancer(config.ConfigSystem.Algorithm, r)
 	}
 	return selected

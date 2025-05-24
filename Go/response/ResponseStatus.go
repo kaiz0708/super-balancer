@@ -14,6 +14,7 @@ type MetricsPageData struct {
 	Algorithm string
 	Errors    []config.ErrorBackend
 	State     string
+	SmartMode bool
 }
 
 //go:embed templates/*
@@ -26,6 +27,7 @@ func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
 		Algorithm: config.ConfigSystem.Algorithm,
 		Errors:    errors,
 		State:     config.StateSystem,
+		SmartMode: config.ConfigSystem.SmartMode,
 	}
 
 	if !config.ConfigSystem.ActiveLogin {

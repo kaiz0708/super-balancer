@@ -130,6 +130,32 @@ func GetErrorHistory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(errors)
 }
 
+func ResetMetrics(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var request struct {
+		BackendID string `json:"backend_id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	_, exists := config.MetricsMap[request.BackendID]
+	if !exists {
+		http.Error(w, "Backend not found", http.StatusNotFound)
+		return
+	}
+
+	UpdateResetMetrics(request.BackendID)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+}
+
 func StartHealthCheck(interval time.Duration) {
 	go func() {
 		ticker := time.NewTicker(interval)

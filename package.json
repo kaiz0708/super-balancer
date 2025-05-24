@@ -1,0 +1,13 @@
+{
+  "name": "super-balancer",
+  "version": "1.0.0",
+  "description": "Load Balancer with Go backend and Node.js wrapper",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+} 

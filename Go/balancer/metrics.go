@@ -32,6 +32,23 @@ func UpdateMetrics(backend string, latency time.Duration, status int) {
 	countRequestLock.Unlock()
 }
 
+func UpdateResetMetrics(url string) {
+	backend := config.MetricsMap[url]
+	backend.Mutex.Lock()
+	defer backend.Mutex.Unlock()
+	backend.Metrics.RequestCount = 0
+	backend.Metrics.SuccessCount = 0
+	backend.Metrics.FailureCount = 0
+	backend.Metrics.TotalLatency = 0
+	backend.Metrics.AvgLatency = 0
+	backend.Metrics.ConsecutiveFails = 0
+	backend.Metrics.ConsecutiveSuccess = 0
+	backend.Metrics.TimeoutBreak = 0
+	backend.Metrics.LastStatus = 0
+	backend.Metrics.ActiveConnections = 0
+	backend.Metrics.CurrentWeight = backend.Metrics.Weight
+}
+
 func UpdateBackendUnhealthy(backend string, status int) {
 	backendMetric := config.MetricsMap[backend]
 	backendMetric.Mutex.Lock()

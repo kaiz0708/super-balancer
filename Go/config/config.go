@@ -69,6 +69,7 @@ type Config struct {
 	TimeOutDelay       uint64
 	ActiveLogin        bool
 	AuthConfig         AuthBasic
+	SmartMode          bool
 }
 
 var MetricsMap = map[string]*BackendMetrics{}

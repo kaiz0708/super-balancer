@@ -59,6 +59,5 @@ func IpHash(r *http.Request) string {
 			break
 		}
 	}
-
 	return selected
 }

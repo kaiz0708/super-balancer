@@ -22,6 +22,7 @@ func main() {
 	timeOutBreak := flag.String("timeOutBreak", "", "Set up timeout break")
 	timeOutDelay := flag.String("timeOutDelay", "", "Set up timeout delay")
 	auth := flag.String("auth", "", "Set up auth")
+	smartMode := flag.String("smartMode", "", "Set up smart mode")
 
 	flag.Parse()
 
@@ -76,6 +77,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	smartModeValue, err := strconv.ParseBool(*smartMode)
+	if err != nil {
+		fmt.Println("Invalid value for smartMode: ", err)
+	}
+
 	config.ConfigSystem.Algorithm = *algorithm
 	config.ConfigSystem.ConsecutiveFails = consecutiveFailsValue
 	config.ConfigSystem.ConsecutiveSuccess = consecutiveSuccessValue
@@ -83,6 +89,7 @@ func main() {
 	config.ConfigSystem.TimeOutRate = timeOutBreakValue
 	config.ConfigSystem.TimeOutDelay = timeOutDelayValue
 	config.ConfigSystem.ActiveLogin = false
+	config.ConfigSystem.SmartMode = smartModeValue
 	config.NewDB(config.GetExecutableDir())
 	config.InitServer()
 	balancer.StartHealthCheck(1 * time.Second)
@@ -92,6 +99,7 @@ func main() {
 	http.HandleFunc("/login-metrics", balancer.Login)
 	http.HandleFunc("/delete-error-history", balancer.DeleteErrorHistory)
 	http.HandleFunc("/error-history", balancer.GetErrorHistory)
+	http.HandleFunc("/reset-metrics", balancer.ResetMetrics)
 	fmt.Println("🚀 Load balancer running on :8080")
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

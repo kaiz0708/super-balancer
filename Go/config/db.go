@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -76,7 +77,7 @@ func (d *DB) InsertMetrics(backendID, status string, metrics *Metrics) error {
 		backendID, status,
 		metrics.FailureCount,
 		metrics.ConsecutiveFails,
-		metrics.TimeoutBreak,
+		metrics.TimeoutRate,
 		metrics.LastStatus,
 		fmt.Sprintf("Backend %s is %s", backendID, status),
 	)
@@ -132,13 +133,67 @@ func (d *DB) DeleteErrorHistory(id int64) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	_, err := d.conn.Exec(`
-		DELETE FROM backend_metrics 
-		WHERE id = ?
-	`, id)
-
+	log.Printf("Attempting to delete history with ID: %d", id)
+	
+	result, err := d.conn.Exec("DELETE FROM backend_metrics WHERE id = ?", id)
 	if err != nil {
+		log.Printf("Database error while deleting history: %v", err)
 		return fmt.Errorf("failed to delete error history: %v", err)
 	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("Error getting rows affected: %v", err)
+		return fmt.Errorf("failed to get rows affected: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		log.Printf("No rows were affected for ID: %d", id)
+		return fmt.Errorf("no history found with ID: %d", id)
+	}
+
+	log.Printf("Successfully deleted history with ID: %d", id)
+	return nil
+}
+
+func (d *DB) DeleteMultipleErrorHistory(ids []int64) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if len(ids) == 0 {
+		return fmt.Errorf("no IDs provided for deletion")
+	}
+
+	log.Printf("Attempting to delete multiple histories with IDs: %v", ids)
+
+	// Create placeholders for the IN clause
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	query := fmt.Sprintf("DELETE FROM backend_metrics WHERE id IN (%s)", strings.Join(placeholders, ","))
+	log.Printf("Executing query: %s with args: %v", query, args)
+
+	result, err := d.conn.Exec(query, args...)
+	if err != nil {
+		log.Printf("Database error while deleting multiple histories: %v", err)
+		return fmt.Errorf("failed to delete multiple error history: %v", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("Error getting rows affected: %v", err)
+		return fmt.Errorf("failed to get rows affected: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		log.Printf("No rows were affected for IDs: %v", ids)
+		return fmt.Errorf("no histories found with provided IDs")
+	}
+
+	log.Printf("Successfully deleted %d histories", rowsAffected)
 	return nil
 }

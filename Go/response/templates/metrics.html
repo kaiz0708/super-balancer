@@ -38,7 +38,7 @@
                         <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Avg Latency</th>
                         <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Consecutive Fails</th>
                         <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Consecutive Success</th>
-                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Timeout Break</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Timeout Rate</th>
                         <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Health Status</th>
                         <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Last Status</th>
                         <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Active Connections</th>
@@ -58,7 +58,7 @@
                         <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.AvgLatency}}</td>
                         <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.ConsecutiveFails}}</td>
                         <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.ConsecutiveSuccess}}</td>
-                        <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.TimeoutBreak}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.TimeoutRate}}</td>
                         <td class="py-3 px-4 border-b border-gray-200 text-xs">
                             <span class="inline-block px-2.5 py-1 rounded-full font-medium text-center text-xs {{if $backend.Metrics.IsHealthy}}bg-green-500 text-white{{else}}bg-red-500 text-white{{end}}">
                                 {{if $backend.Metrics.IsHealthy}}healthy{{else}}unhealthy{{end}}
@@ -82,28 +82,39 @@
         <div class="mt-8">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold">State History</h2>
-                <button id="toggleErrorHistory" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-xs hover:bg-blue-600 transition">
-                    Hide History
-                </button>
+                <div class="flex gap-2">
+                    <button id="toggleErrorHistory" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-xs hover:bg-blue-600 transition">
+                        Show History
+                    </button>
+                    <button id="deleteSelectedHistory" class="px-4 py-2 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600 transition hidden">
+                        Delete Selected
+                    </button>
+                </div>
             </div>
-            <div id="errorHistoryContent" class="overflow-x-auto rounded-lg">
+            <div id="errorHistoryContent" class="overflow-x-auto rounded-lg" style="display: none;">
                 <table class="w-full border-separate border-spacing-0 bg-white">
                     <thead>
                         <tr>
-                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Backend</th>
-                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Status</th>
-                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Time</th>
-                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Details</th>
-                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Consecutive Fails</th>
-                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Timeout Break</th>
-                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Last Status</th>
-                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Failure Count</th>
-                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Action</th>
+                            <th class="bg-green-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">
+                                <input type="checkbox" id="selectAllHistory" class="form-checkbox h-4 w-4 text-white">
+                            </th>
+                            <th class="bg-green-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Backend</th>
+                            <th class="bg-green-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Status</th>
+                            <th class="bg-green-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Time</th>
+                            <th class="bg-green-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Details</th>
+                            <th class="bg-green-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Consecutive Fails</th>
+                            <th class="bg-green-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Timeout Rate</th>
+                            <th class="bg-green-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Last Status</th>
+                            <th class="bg-green-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Failure Count</th>
+                            <th class="bg-green-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Action</th>
                         </tr>
                     </thead>
                     <tbody id="error-history">
                         {{range .Errors}}
                         <tr class="hover:bg-gray-100 transition-colors">
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">
+                                <input type="checkbox" class="history-checkbox form-checkbox h-4 w-4 text-green-500" data-id="{{.ID}}">
+                            </td>
                             <td class="py-3 px-4 border-b border-gray-200 text-xs">{{.Backend}}</td>
                             <td class="py-3 px-4 border-b border-gray-200 text-xs">{{.Status}}</td>
                             <td class="py-3 px-4 border-b border-gray-200 text-xs">{{.Time}}</td>
@@ -142,54 +153,99 @@
         <div id="feedback-message" class="mt-2 text-center text-xs p-2 rounded-lg hidden"></div>
     </div>
     <script>
-
         const toggleButton = document.getElementById('toggleErrorHistory');
         const errorHistoryContent = document.getElementById('errorHistoryContent');
+        const deleteSelectedButton = document.getElementById('deleteSelectedHistory');
+        const selectAllCheckbox = document.getElementById('selectAllHistory');
+        
+        // Load saved state from localStorage
+        const savedState = localStorage.getItem('historyVisible');
+        if (savedState === 'true') {
+            errorHistoryContent.style.display = 'block';
+            toggleButton.textContent = 'Hide History';
+        } else {
+            errorHistoryContent.style.display = 'none';
+            toggleButton.textContent = 'Show History';
+        }
         
         toggleButton.addEventListener('click', function() {
             if (errorHistoryContent.style.display === 'none') {
                 errorHistoryContent.style.display = 'block';
                 toggleButton.textContent = 'Hide History';
+                localStorage.setItem('historyVisible', 'true');
             } else {
                 errorHistoryContent.style.display = 'none';
                 toggleButton.textContent = 'Show History';
+                localStorage.setItem('historyVisible', 'false');
             }
         });
 
-        document.getElementById('change-algorithm-form').addEventListener('submit', async function(event) {
-            event.preventDefault();
+        // Handle select all checkbox
+        selectAllCheckbox.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.history-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateDeleteButtonVisibility();
+        });
+
+        // Handle individual checkboxes
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('history-checkbox')) {
+                updateDeleteButtonVisibility();
+                updateSelectAllCheckbox();
+            }
+        });
+
+        function updateDeleteButtonVisibility() {
+            const checkedBoxes = document.querySelectorAll('.history-checkbox:checked');
+            deleteSelectedButton.style.display = checkedBoxes.length > 0 ? 'block' : 'none';
+        }
+
+        function updateSelectAllCheckbox() {
+            const checkboxes = document.querySelectorAll('.history-checkbox');
+            const checkedBoxes = document.querySelectorAll('.history-checkbox:checked');
+            selectAllCheckbox.checked = checkboxes.length === checkedBoxes.length;
+        }
+
+        // Handle delete selected
+        deleteSelectedButton.addEventListener('click', async function() {
+            const checkedBoxes = document.querySelectorAll('.history-checkbox:checked');
+            const ids = Array.from(checkedBoxes).map(checkbox => parseInt(checkbox.dataset.id));
             
-            const selectElement = this.querySelector('select[name="name"]');
-            const algorithm = selectElement.value;
-            const feedbackMessage = document.getElementById('feedback-message');
+            if (ids.length === 0) {
+                alert('Please select at least one item to delete');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete ${ids.length} selected history items?`)) {
+                return;
+            }
 
             try {
-                const response = await fetch('/change-load-balancer?name=' + encodeURIComponent(algorithm), {
-                    method: 'GET',
+                const response = await fetch('/delete-error-history', {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer your-secret-token'
                     },
+                    body: JSON.stringify({
+                        ids: ids
+                    })
                 });
 
                 if (response.ok) {
-                    const result = await response.json();
-                    feedbackMessage.textContent = 'Successfully changed to ' + result + ' algorithm';
-                    feedbackMessage.classList.remove('bg-red-500', 'text-white');
-                    feedbackMessage.classList.add('bg-green-500', 'text-white');
+                    updateErrorHistory();
+                    deleteSelectedButton.style.display = 'none';
+                    selectAllCheckbox.checked = false;
                 } else {
-                    throw new Error('Failed to change algorithm');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to delete error history');
                 }
             } catch (error) {
-                feedbackMessage.textContent = 'Error: ' + error.message;
-                feedbackMessage.classList.remove('bg-green-500', 'text-white');
-                feedbackMessage.classList.add('bg-red-500', 'text-white');
+                console.error('Error deleting error history:', error);
+                alert(error.message || 'Failed to delete error history');
             }
-
-            feedbackMessage.classList.remove('hidden');
-            setTimeout(() => {
-                feedbackMessage.classList.add('hidden');
-            }, 3000);
         });
 
         async function updateErrorHistory() {
@@ -207,6 +263,9 @@
                     const tbody = document.getElementById('error-history');
                     tbody.innerHTML = data.map(error => `
                         <tr class="hover:bg-gray-100 transition-colors">
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">
+                                <input type="checkbox" class="history-checkbox form-checkbox h-4 w-4 text-green-500" data-id="${error.ID}">
+                            </td>
                             <td class="py-3 px-4 border-b border-gray-200 text-xs">${error.Backend}</td>
                             <td class="py-3 px-4 border-b border-gray-200 text-xs">${error.Status}</td>
                             <td class="py-3 px-4 border-b border-gray-200 text-xs">${error.Time}</td>
@@ -248,11 +307,12 @@
                 if (response.ok) {
                     updateErrorHistory();
                 } else {
-                    throw new Error('Failed to delete error history');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to delete error history');
                 }
             } catch (error) {
                 console.error('Error deleting error history:', error);
-                alert('Failed to delete error history');
+                alert(error.message || 'Failed to delete error history');
             }
         }
 
@@ -283,6 +343,42 @@
                 alert('Failed to reset metrics');
             }
         }
+
+        document.getElementById('change-algorithm-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const selectElement = this.querySelector('select[name="name"]');
+            const algorithm = selectElement.value;
+            const feedbackMessage = document.getElementById('feedback-message');
+
+            try {
+                const response = await fetch('/change-load-balancer?name=' + encodeURIComponent(algorithm), {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer your-secret-token'
+                    },
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    feedbackMessage.textContent = 'Successfully changed to ' + result + ' algorithm';
+                    feedbackMessage.classList.remove('bg-red-500', 'text-white');
+                    feedbackMessage.classList.add('bg-green-500', 'text-white');
+                } else {
+                    throw new Error('Failed to change algorithm');
+                }
+            } catch (error) {
+                feedbackMessage.textContent = 'Error: ' + error.message;
+                feedbackMessage.classList.remove('bg-green-500', 'text-white');
+                feedbackMessage.classList.add('bg-red-500', 'text-white');
+            }
+
+            feedbackMessage.classList.remove('hidden');
+            setTimeout(() => {
+                feedbackMessage.classList.add('hidden');
+            }, 3000);
+        });
     </script>
 </body>
 </html>

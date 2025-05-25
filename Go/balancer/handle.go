@@ -7,9 +7,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 )
@@ -43,7 +45,7 @@ func CheckUnhealthyBackend() {
 				}
 				defer resp.Body.Close()
 
-				if resp.StatusCode == 200 {
+				if resp.StatusCode == 200 && m.Metrics.TimeoutRate <= config.ConfigSystem.TimeOutRate {
 					m.Mutex.Lock()
 					config.MetricsMap[backend].Metrics.ConsecutiveSuccess++
 					m.Mutex.Unlock()
@@ -77,13 +79,30 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 	}
 
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		if errors.Is(err, context.Canceled) {
+		var statusCode int
+
+		switch {
+		case errors.Is(err, context.Canceled):
+			statusCode = http.StatusRequestTimeout
 			mutexTimeOutRate.Lock()
-			config.MetricsMap[backend].Metrics.TimeoutBreak++
+			config.MetricsMap[backend].Metrics.TimeoutRate++
 			mutexTimeOutRate.Unlock()
+
+		case errors.Is(err, context.DeadlineExceeded):
+			statusCode = http.StatusGatewayTimeout
+
+		case strings.Contains(err.Error(), config.ErrorConnectionRefused):
+			statusCode = http.StatusBadGateway
+
+		case strings.Contains(err.Error(), config.ErrorNoSuchHost):
+			statusCode = http.StatusServiceUnavailable
+
+		default:
+			statusCode = http.StatusBadGateway
 		}
+
 		UpdateActiveConnectionMetrics(backend, false)
-		UpdateBackendUnhealthy(backend, 502)
+		UpdateBackendUnhealthy(backend, statusCode)
 	}
 
 	r.Host = url.Host
@@ -93,9 +112,7 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 
 func ChangeAlgoLoadBalancer(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
-
 	config.ConfigSystem.Algorithm = name
-
 	json.NewEncoder(w).Encode(name)
 }
 
@@ -106,17 +123,32 @@ func DeleteErrorHistory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var request struct {
-		ID int64 `json:"id"`
+		ID  int64   `json:"id"`
+		IDs []int64 `json:"ids"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		log.Printf("Error decoding request body: %v", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	if err := config.GlobalDB.DeleteErrorHistory(request.ID); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	log.Printf("Received delete request - ID: %v, IDs: %v", request.ID, request.IDs)
+
+	if request.ID != 0 {
+		if err := config.GlobalDB.DeleteErrorHistory(request.ID); err != nil {
+			log.Printf("Error deleting single history: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if len(request.IDs) > 0 {
+		if err := config.GlobalDB.DeleteMultipleErrorHistory(request.IDs); err != nil {
+			log.Printf("Error deleting multiple history: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)

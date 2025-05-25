@@ -14,7 +14,7 @@ func AnalyzeSystemState() string {
 		if backend.Metrics.IsHealthy && backend.Metrics.ConsecutiveFails <= config.ConfigSystem.ConsecutiveFails {
 			healthyCount++
 		}
-		if backend.Metrics.TimeoutBreak >= config.ConfigSystem.TimeOutRate {
+		if backend.Metrics.TimeoutRate >= config.ConfigSystem.TimeOutRate {
 			highLatencyCount++
 		}
 	}

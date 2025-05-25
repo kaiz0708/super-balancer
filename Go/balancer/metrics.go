@@ -43,10 +43,11 @@ func UpdateResetMetrics(url string) {
 	backend.Metrics.AvgLatency = 0
 	backend.Metrics.ConsecutiveFails = 0
 	backend.Metrics.ConsecutiveSuccess = 0
-	backend.Metrics.TimeoutBreak = 0
+	backend.Metrics.TimeoutRate = 0
 	backend.Metrics.LastStatus = 0
 	backend.Metrics.ActiveConnections = 0
 	backend.Metrics.CurrentWeight = backend.Metrics.Weight
+	backend.Metrics.IsHealthy = true
 }
 
 func UpdateBackendUnhealthy(backend string, status int) {
@@ -59,7 +60,7 @@ func UpdateBackendUnhealthy(backend string, status int) {
 	m.RequestCount++
 	m.LastStatus = status
 	failRate := float64(m.FailureCount) / float64(m.RequestCount)
-	if (m.ConsecutiveFails >= config.ConfigSystem.ConsecutiveFails || failRate >= config.ConfigSystem.FailRate || m.TimeoutBreak >= config.ConfigSystem.TimeOutRate) && m.IsHealthy {
+	if (m.ConsecutiveFails >= config.ConfigSystem.ConsecutiveFails || failRate >= config.ConfigSystem.FailRate || m.TimeoutRate >= config.ConfigSystem.TimeOutRate) && m.IsHealthy {
 		m.IsHealthy = false
 		config.GlobalDB.InsertMetrics(backend, config.Unhealthy, m)
 	}
@@ -76,7 +77,7 @@ func UpdateBackendRecovering(backend string) {
 		m.AvgLatency = 0
 		m.TotalLatency = 0
 		m.LastLatency = 0
-		m.TimeoutBreak = 0
+		m.TimeoutRate = 0
 		m.ConsecutiveSuccess = 0
 		m.SuccessCount = 0
 		m.RequestCount = 1

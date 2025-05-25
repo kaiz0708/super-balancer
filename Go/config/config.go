@@ -22,6 +22,8 @@ const (
 	ManyFailed                  = "ManyFailed"
 	HighLatency                 = "HighLatency"
 	Stable                      = "Stable"
+	ErrorConnectionRefused      = "connection refused"
+	ErrorNoSuchHost             = "no such host"
 )
 
 type Metrics struct {
@@ -34,7 +36,7 @@ type Metrics struct {
 	LastChecked        time.Time
 	ConsecutiveFails   uint64
 	ConsecutiveSuccess uint64
-	TimeoutBreak       uint64
+	TimeoutRate        uint64
 	IsHealthy          bool
 	LastStatus         int
 	ActiveConnections  int64

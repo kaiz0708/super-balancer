@@ -2,13 +2,9 @@ package balancer
 
 import (
 	"Go/config"
-	"sync"
 	"sync/atomic"
 	"time"
 )
-
-var countRequestLock sync.Mutex
-var TotalRequests uint64 = 0
 
 func UpdateMetrics(backend string, latency time.Duration, status int) {
 	backendMetric := config.MetricsMap[backend]
@@ -26,10 +22,6 @@ func UpdateMetrics(backend string, latency time.Duration, status int) {
 	if m.RequestCount > 0 {
 		m.AvgLatency = m.TotalLatency / time.Duration(m.RequestCount)
 	}
-
-	countRequestLock.Lock()
-	TotalRequests++
-	countRequestLock.Unlock()
 }
 
 func UpdateResetMetrics(url string) {
@@ -82,7 +74,6 @@ func UpdateBackendRecovering(backend string) {
 		m.SuccessCount = 0
 		m.RequestCount = 1
 		m.FailureCount = 0
-		config.GlobalDB.InsertMetrics(backend, config.Recovery, m)
 	}
 }
 

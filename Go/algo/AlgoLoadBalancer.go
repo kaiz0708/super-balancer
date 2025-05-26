@@ -7,7 +7,6 @@ import (
 	"net/http"
 )
 
-var AlgoCurrent string
 
 func ChooseAlgorithm(state string, r *http.Request) string {
 	selected := ""

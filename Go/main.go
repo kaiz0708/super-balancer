@@ -3,6 +3,7 @@ package main
 import (
 	"Go/balancer"
 	"Go/config"
+	"Go/middleware"
 	"Go/response"
 	"encoding/json"
 	"flag"
@@ -93,13 +94,14 @@ func main() {
 	config.NewDB(config.GetExecutableDir())
 	config.InitServer()
 	balancer.StartHealthCheck(1 * time.Second)
-	http.HandleFunc("/", balancer.Handler)
-	http.HandleFunc("/change-load-balancer", balancer.ChangeAlgoLoadBalancer)
-	http.HandleFunc("/metrics", response.HandleStatusHTML)
-	http.HandleFunc("/login-metrics", balancer.Login)
-	http.HandleFunc("/delete-error-history", balancer.DeleteErrorHistory)
-	http.HandleFunc("/error-history", balancer.GetErrorHistory)
-	http.HandleFunc("/reset-metrics", balancer.ResetMetrics)
+	corsMiddleware := middleware.NewCORSMiddleware()
+	http.Handle("/", corsMiddleware.HandleCORS(http.HandlerFunc(balancer.Handler)))
+	http.Handle("/change-load-balancer", corsMiddleware.HandleCORS(http.HandlerFunc(balancer.ChangeAlgoLoadBalancer)))
+	http.Handle("/metrics", corsMiddleware.HandleCORS(http.HandlerFunc(response.HandleStatusHTML)))
+	http.Handle("/login-metrics", corsMiddleware.HandleCORS(http.HandlerFunc(balancer.Login)))
+	http.Handle("/delete-error-history", corsMiddleware.HandleCORS(http.HandlerFunc(balancer.DeleteErrorHistory)))
+	http.Handle("/error-history", corsMiddleware.HandleCORS(http.HandlerFunc(balancer.GetErrorHistory)))
+	http.Handle("/reset-metrics", corsMiddleware.HandleCORS(http.HandlerFunc(balancer.ResetMetrics)))
 	fmt.Println("🚀 Load balancer running on :8080")
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

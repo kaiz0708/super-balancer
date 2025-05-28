@@ -34,21 +34,25 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func CheckUnhealthyBackend() {
+	client := &http.Client{
+		Timeout: time.Duration(config.ConfigSystem.TimeOutDelay) * time.Second,
+	}
+
 	for backend, m := range config.MetricsMap {
 		if !m.Metrics.IsHealthy && m.HealthPath != "" {
 			go func(backend string, m *config.BackendMetrics) {
 				url := backend + m.HealthPath
 
-				resp, err := http.Get(url)
+				resp, err := client.Get(url)
 				if err != nil {
 					return
 				}
 				defer resp.Body.Close()
 
 				if resp.StatusCode == 200 && m.Metrics.TimeoutRate <= config.ConfigSystem.TimeOutRate {
-					m.Mutex.Lock()
+					config.MetricsMap[backend].Mutex.Lock()
 					config.MetricsMap[backend].Metrics.ConsecutiveSuccess++
-					m.Mutex.Unlock()
+					config.MetricsMap[backend].Mutex.Unlock()
 					UpdateBackendRecovering(backend)
 				}
 			}(backend, m)

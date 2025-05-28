@@ -48,8 +48,8 @@ func UpdateBackendUnhealthy(backend string, status int) {
 	defer backendMetric.Mutex.Unlock()
 	m := backendMetric.Metrics
 	m.FailureCount++
-	m.ConsecutiveFails++
 	m.RequestCount++
+	m.ConsecutiveFails++
 	m.LastStatus = status
 	failRate := float64(m.FailureCount) / float64(m.RequestCount)
 	if (m.ConsecutiveFails >= config.ConfigSystem.ConsecutiveFails || failRate >= config.ConfigSystem.FailRate || m.TimeoutRate >= config.ConfigSystem.TimeOutRate) && m.IsHealthy {

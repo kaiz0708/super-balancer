@@ -24,6 +24,7 @@ func main() {
 	timeOutDelay := flag.String("timeOutDelay", "", "Set up timeout delay")
 	auth := flag.String("auth", "", "Set up auth")
 	smartMode := flag.String("smartMode", "", "Set up smart mode")
+	rateLimit := flag.String("rateLimit", "1000", "Maximum requests per second per IP")
 
 	flag.Parse()
 
@@ -35,6 +36,12 @@ func main() {
 		*timeOutBreak == "" ||
 		*timeOutDelay == "" {
 		fmt.Println("Missing one or more required flags")
+		os.Exit(1)
+	}
+
+	rateLimitValue, err := strconv.Atoi(*rateLimit)
+	if err != nil {
+		fmt.Println("Invalid rate limit value:", err)
 		os.Exit(1)
 	}
 
@@ -94,15 +101,18 @@ func main() {
 	config.NewDB(config.GetExecutableDir())
 	config.InitServer()
 	balancer.StartHealthCheck(1 * time.Second)
+
+	rateLimiter := middleware.NewRateLimiter(rateLimitValue)
 	corsMiddleware := middleware.NewCORSMiddleware()
-	http.Handle("/", corsMiddleware.HandleCORS(http.HandlerFunc(balancer.Handler)))
-	http.Handle("/change-load-balancer", corsMiddleware.HandleCORS(http.HandlerFunc(balancer.ChangeAlgoLoadBalancer)))
-	http.Handle("/metrics", corsMiddleware.HandleCORS(http.HandlerFunc(response.HandleStatusHTML)))
-	http.Handle("/login-metrics", corsMiddleware.HandleCORS(http.HandlerFunc(balancer.Login)))
-	http.Handle("/delete-error-history", corsMiddleware.HandleCORS(http.HandlerFunc(balancer.DeleteErrorHistory)))
-	http.Handle("/error-history", corsMiddleware.HandleCORS(http.HandlerFunc(balancer.GetErrorHistory)))
-	http.Handle("/reset-metrics", corsMiddleware.HandleCORS(http.HandlerFunc(balancer.ResetMetrics)))
-	fmt.Println("🚀 Load balancer running on :8080")
+	http.Handle("/", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.Handler))))
+	http.Handle("/change-load-balancer", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.ChangeAlgoLoadBalancer))))
+	http.Handle("/metrics", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(response.HandleStatusHTML))))
+	http.Handle("/login-metrics", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.Login))))
+	http.Handle("/delete-error-history", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.DeleteErrorHistory))))
+	http.Handle("/error-history", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.GetErrorHistory))))
+	http.Handle("/reset-metrics", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.ResetMetrics))))
+
+	fmt.Printf("🚀 Load balancer running on :8080 with rate limit of %d requests/second per IP\n", rateLimitValue)
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println("❌ Server failed to start:", err)

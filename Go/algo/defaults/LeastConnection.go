@@ -17,7 +17,7 @@ func LeastConnection() string {
 			continue
 		}
 
-		if target.ActiveConnections <= minConnection && target.IsHealthy {
+		if target.ActiveConnections <= minConnection {
 			minConnection = target.ActiveConnections
 			selected = backend
 		}

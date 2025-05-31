@@ -4,7 +4,7 @@ FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS builder
 WORKDIR /app
 
 # Copy go mod and sum files
-COPY ./go.mod ./go.sum ./
+COPY go.mod go.sum ./
 
 # Download dependencies
 RUN go mod download

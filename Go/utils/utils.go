@@ -1,4 +1,4 @@
-package algo_default
+package utils
 
 import (
 	"Go/config"
@@ -21,7 +21,7 @@ func SumWeightMetrics() int64 {
 	return int64(sumWeight)
 }
 
-func getClientIP(r *http.Request) string {
+func GetClientIP(r *http.Request) string {
 	forwarded := r.Header.Get("X-Forwarded-For")
 	if forwarded != "" {
 		ips := strings.Split(forwarded, ",")

@@ -12,11 +12,8 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 )
-
-var mutexTimeOutRate sync.Mutex
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -25,8 +22,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.FormValue("username")
 	password := r.FormValue("password")
-	if username == config.ConfigSystem.AuthConfig.Username && password == config.ConfigSystem.AuthConfig.Password {
-		config.ConfigSystem.ActiveLogin = true
+	if username == config.ConfigSystem.AuthBasic.Username && password == config.ConfigSystem.AuthBasic.Password {
+		config.ActiveLogin = true
 		http.Redirect(w, r, "/metrics", http.StatusSeeOther)
 	} else {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
@@ -88,9 +85,9 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, context.Canceled):
 			statusCode = http.StatusRequestTimeout
-			mutexTimeOutRate.Lock()
+			config.MetricsMap[backend].Mutex.Lock()
 			config.MetricsMap[backend].Metrics.TimeoutRate++
-			mutexTimeOutRate.Unlock()
+			config.MetricsMap[backend].Mutex.Unlock()
 
 		case errors.Is(err, context.DeadlineExceeded):
 			statusCode = http.StatusGatewayTimeout
@@ -208,7 +205,6 @@ func StartHealthCheck(interval time.Duration) {
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	CheckUnhealthyBackend()
 	pickState := AnalyzeSystemState()
 	if pickState == config.AllFailed {
 		response.CustomAllFailed(w)

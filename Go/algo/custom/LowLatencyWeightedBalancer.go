@@ -1,8 +1,8 @@
 package custom
 
 import (
-	algo_default "Go/algo/defaults"
 	"Go/config"
+	"Go/utils"
 	"math"
 	"time"
 )
@@ -11,7 +11,7 @@ func LowLatencyWeightedBalancer() string {
 	metrics := config.MetricsMap
 	selected := ""
 	minLatency := time.Duration(math.MaxInt64)
-	sumWeight := algo_default.SumWeightMetrics()
+	sumWeight := utils.SumWeightMetrics()
 	maxCurrentWeight := int64(math.MinInt64)
 
 	for backend, target := range metrics {

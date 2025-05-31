@@ -30,7 +30,7 @@ func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
 		SmartMode: config.ConfigSystem.SmartMode,
 	}
 
-	if !config.ConfigSystem.ActiveLogin {
+	if !config.ActiveLogin {
 		tmpl, err := template.ParseFS(templates, "templates/login.html")
 		if err != nil {
 			fmt.Println("Error parsing template:", err)

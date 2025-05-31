@@ -2,12 +2,13 @@ package algo_default
 
 import (
 	"Go/config"
+	"Go/utils"
 	"hash/fnv"
 	"net/http"
 )
 
 func IpHash(r *http.Request) string {
-	ip := getClientIP(r)
+	ip := utils.GetClientIP(r)
 	backends := config.ConfigSystem.Servers
 	metrics := config.MetricsMap
 	selected := ""
@@ -23,7 +24,7 @@ func IpHash(r *http.Request) string {
 	hasher.Write([]byte(ip))
 	hashValue := hasher.Sum32()
 
-	totalWeight := SumWeightMetrics()
+	totalWeight := utils.SumWeightMetrics()
 
 	hashValue = hashValue % uint32(totalWeight)
 	currentWeight := int64(0)

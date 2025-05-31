@@ -74,6 +74,7 @@ func UpdateBackendRecovering(backend string) {
 		m.SuccessCount = 0
 		m.RequestCount = 1
 		m.FailureCount = 0
+		config.GlobalDB.InsertMetrics(backend, config.Recovery, m)
 	}
 }
 

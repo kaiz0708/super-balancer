@@ -1,19 +1,20 @@
 package middleware
 
 import (
+	"Go/utils"
 	"net/http"
 	"sync"
 	"time"
 )
 
 type RateLimiter struct {
-	requestsPerSecond int
+	requestsPerSecond int64
 	windowSize        time.Duration
 	requests          map[string][]time.Time
 	mu                sync.Mutex
 }
 
-func NewRateLimiter(requestsPerSecond int) *RateLimiter {
+func NewRateLimiter(requestsPerSecond int64) *RateLimiter {
 	return &RateLimiter{
 		requestsPerSecond: requestsPerSecond,
 		windowSize:        time.Second,
@@ -23,7 +24,7 @@ func NewRateLimiter(requestsPerSecond int) *RateLimiter {
 
 func (rl *RateLimiter) HandleRateLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		clientIP := r.RemoteAddr
+		clientIP := utils.GetClientIP(r)
 
 		rl.mu.Lock()
 		now := time.Now()
@@ -38,7 +39,7 @@ func (rl *RateLimiter) HandleRateLimit(next http.Handler) http.Handler {
 			rl.requests[clientIP] = validRequests
 		}
 
-		if len(rl.requests[clientIP]) >= rl.requestsPerSecond {
+		if int64(len(rl.requests[clientIP])) >= rl.requestsPerSecond {
 			rl.mu.Unlock()
 			http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 			return

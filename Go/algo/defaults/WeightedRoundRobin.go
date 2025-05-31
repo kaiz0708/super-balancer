@@ -2,12 +2,13 @@ package algo_default
 
 import (
 	"Go/config"
+	"Go/utils"
 	"math"
 )
 
 func WeightedRoundRobin() string {
 	metrics := config.MetricsMap
-	sumWeight := SumWeightMetrics()
+	sumWeight := utils.SumWeightMetrics()
 	selected := ""
 	maxCurrentWeight := int64(math.MinInt64)
 

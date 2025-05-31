@@ -44,17 +44,6 @@ type Metrics struct {
 	CurrentWeight      int64
 }
 
-type AuthBasic struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type BackendConfig struct {
-	UrlConfig        string `json:"url" validate:"required"`
-	WeightConfig     int64  `json:"weight"`
-	HealthPathConfig string `json:"healthPath"`
-}
-
 type BackendMetrics struct {
 	Mutex      sync.Mutex
 	Metrics    *Metrics
@@ -62,16 +51,27 @@ type BackendMetrics struct {
 }
 
 type Config struct {
-	Algorithm          string
-	Servers            []BackendConfig
-	ConsecutiveFails   uint64
-	ConsecutiveSuccess uint64
-	FailRate           float64
-	TimeOutRate        uint64
-	TimeOutDelay       uint64
-	ActiveLogin        bool
-	AuthConfig         AuthBasic
-	SmartMode          bool
+	Algorithm          string          `yaml:"algorithm"`
+	Servers            []BackendConfig `yaml:"backends"`
+	ConsecutiveFails   uint64          `yaml:"consecutiveFails"`
+	ConsecutiveSuccess uint64          `yaml:"consecutiveSuccess"`
+	FailRate           float64         `yaml:"failRate"`
+	TimeOutRate        uint64          `yaml:"timeOutBreak"`
+	TimeOutDelay       uint64          `yaml:"timeOutDelay"`
+	AuthBasic          AuthConfig      `yaml:"auth"`
+	SmartMode          bool            `yaml:"smartMode"`
+	RateLimit          int64           `yaml:"rateLimit"`
+}
+
+type BackendConfig struct {
+	UrlConfig        string `yaml:"url"`
+	WeightConfig     int64  `yaml:"weight"`
+	HealthPathConfig string `json:"healthPath"`
+}
+
+type AuthConfig struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
 var MetricsMap = map[string]*BackendMetrics{}
@@ -79,6 +79,8 @@ var MetricsMap = map[string]*BackendMetrics{}
 var ConfigSystem Config
 
 var StateSystem string
+
+var ActiveLogin bool
 
 func InitServer() {
 	StateSystem = Stable

@@ -5,104 +5,63 @@ import (
 	"Go/config"
 	"Go/middleware"
 	"Go/response"
-	"encoding/json"
-	"flag"
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
+
+	"gopkg.in/yaml.v2"
 )
 
 func main() {
-	algorithm := flag.String("algorithm", "", "Load balancing algorithm")
-	backends := flag.String("backends", "", "JSON array of backend servers")
-	consecutiveFails := flag.String("consecutiveFails", "", "Set up amount consecutiveFails")
-	consecutiveSuccess := flag.String("consecutiveSuccess", "", "Set up amount consecutiveSuccess")
-	failRate := flag.String("failRate", "", "Set up rate fail")
-	timeOutBreak := flag.String("timeOutBreak", "", "Set up timeout break")
-	timeOutDelay := flag.String("timeOutDelay", "", "Set up timeout delay")
-	auth := flag.String("auth", "", "Set up auth")
-	smartMode := flag.String("smartMode", "", "Set up smart mode")
-	rateLimit := flag.String("rateLimit", "1000", "Maximum requests per second per IP")
+	configFile := "config.yaml"
+	if envConfig := os.Getenv("CONFIG_FILE"); envConfig != "" {
+		configFile = envConfig
+	}
 
-	flag.Parse()
-
-	if *algorithm == "" ||
-		*backends == "" ||
-		*consecutiveFails == "" ||
-		*consecutiveSuccess == "" ||
-		*failRate == "" ||
-		*timeOutBreak == "" ||
-		*timeOutDelay == "" {
-		fmt.Println("Missing one or more required flags")
+	data, err := os.ReadFile(configFile)
+	if err != nil {
+		fmt.Printf("Error reading config file: %v\n", err)
 		os.Exit(1)
 	}
 
-	rateLimitValue, err := strconv.Atoi(*rateLimit)
-	if err != nil {
-		fmt.Println("Invalid rate limit value:", err)
+	var cfg config.Config
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		fmt.Printf("Error parsing config file: %v\n", err)
 		os.Exit(1)
 	}
 
-	consecutiveFailsValue, err := strconv.ParseUint(*consecutiveFails, 10, 64)
-	if err != nil {
-		fmt.Println("Lỗi chuyển đổi:", err)
-		return
-	}
-
-	consecutiveSuccessValue, err := strconv.ParseUint(*consecutiveSuccess, 10, 64)
-	if err != nil {
-		fmt.Println("Lỗi chuyển đổi:", err)
-		return
-	}
-
-	timeOutDelayValue, err := strconv.ParseUint(*timeOutDelay, 10, 64)
-	if err != nil {
-		fmt.Println("Lỗi chuyển đổi:", err)
-		return
-	}
-
-	faileRateValue, err := strconv.ParseFloat(*failRate, 64)
-	if err != nil {
-		fmt.Println("Lỗi chuyển đổi:", err)
-		return
-	}
-
-	timeOutBreakValue, err := strconv.ParseUint(*timeOutBreak, 10, 64)
-	if err != nil {
-		fmt.Println("Lỗi chuyển đổi:", err)
-		return
-	}
-
-	if err := json.Unmarshal([]byte(*backends), &config.ConfigSystem.Servers); err != nil {
-		fmt.Println("Failed to parse backends:", err)
+	if cfg.Algorithm == "" || len(cfg.Servers) == 0 {
+		fmt.Println("Missing required configuration fields")
 		os.Exit(1)
 	}
 
-	if err := json.Unmarshal([]byte(*auth), &config.ConfigSystem.AuthConfig); err != nil {
-		fmt.Println("Failed to parse auth:", err)
-		os.Exit(1)
+	config.ConfigSystem.Servers = make([]config.BackendConfig, len(cfg.Servers))
+	for i, b := range cfg.Servers {
+		config.ConfigSystem.Servers[i] = config.BackendConfig{
+			UrlConfig:        b.UrlConfig,
+			WeightConfig:     b.WeightConfig,
+			HealthPathConfig: b.HealthPathConfig,
+		}
 	}
 
-	smartModeValue, err := strconv.ParseBool(*smartMode)
-	if err != nil {
-		fmt.Println("Invalid value for smartMode: ", err)
+	config.ConfigSystem.Algorithm = cfg.Algorithm
+	config.ConfigSystem.ConsecutiveFails = cfg.ConsecutiveFails
+	config.ConfigSystem.ConsecutiveSuccess = cfg.ConsecutiveSuccess
+	config.ConfigSystem.FailRate = cfg.FailRate
+	config.ConfigSystem.TimeOutRate = cfg.TimeOutRate
+	config.ConfigSystem.TimeOutDelay = cfg.TimeOutDelay
+	config.ActiveLogin = false
+	config.ConfigSystem.SmartMode = cfg.SmartMode
+	config.ConfigSystem.AuthBasic = config.AuthConfig{
+		Username: cfg.AuthBasic.Username,
+		Password: cfg.AuthBasic.Password,
 	}
 
-	config.ConfigSystem.Algorithm = *algorithm
-	config.ConfigSystem.ConsecutiveFails = consecutiveFailsValue
-	config.ConfigSystem.ConsecutiveSuccess = consecutiveSuccessValue
-	config.ConfigSystem.FailRate = faileRateValue
-	config.ConfigSystem.TimeOutRate = timeOutBreakValue
-	config.ConfigSystem.TimeOutDelay = timeOutDelayValue
-	config.ConfigSystem.ActiveLogin = false
-	config.ConfigSystem.SmartMode = smartModeValue
 	config.NewDB(config.GetExecutableDir())
 	config.InitServer()
 	balancer.StartHealthCheck(1 * time.Second)
-
-	rateLimiter := middleware.NewRateLimiter(rateLimitValue)
+	rateLimiter := middleware.NewRateLimiter(cfg.RateLimit)
 	corsMiddleware := middleware.NewCORSMiddleware()
 	http.Handle("/", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.Handler))))
 	http.Handle("/change-load-balancer", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.ChangeAlgoLoadBalancer))))
@@ -112,7 +71,7 @@ func main() {
 	http.Handle("/error-history", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.GetErrorHistory))))
 	http.Handle("/reset-metrics", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.ResetMetrics))))
 
-	fmt.Printf("🚀 Load balancer running on :8080 with rate limit of %d requests/second per IP\n", rateLimitValue)
+	fmt.Printf("🚀 Load balancer running with rate limit of %d requests/second per IP\n", cfg.RateLimit)
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println("❌ Server failed to start:", err)

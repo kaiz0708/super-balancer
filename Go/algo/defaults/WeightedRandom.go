@@ -2,6 +2,7 @@ package algo_default
 
 import (
 	"Go/config"
+	"Go/utils"
 	"math/rand"
 	"time"
 )
@@ -9,7 +10,7 @@ import (
 func WeightedRandom() string {
 
 	backends := config.MetricsMap
-	totalWeight := SumWeightMetrics()
+	totalWeight := utils.SumWeightMetrics()
 	selected := ""
 	rand.Seed(time.Now().UnixNano())
 	r := rand.Int63n(totalWeight)

@@ -37,7 +37,7 @@ func NewDB(dbPath string) {
 		CREATE TABLE IF NOT EXISTS backend_metrics (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			backend_id TEXT NOT NULL,
-			status TEXT NOT NULL, -- "healthy" hoặc "recovered"
+			status TEXT NOT NULL,
 			timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 			failure_count INTEGER,
 			consecutive_fails INTEGER,

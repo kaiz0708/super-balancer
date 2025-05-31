@@ -1,0 +1,381 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Balancer Metrics</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="font-inter bg-gray-100 text-gray-700 leading-7 p-4 text-sm">
+    <div class="max-w-6xl mx-auto bg-white rounded-2xl p-6 shadow-sm">
+        <h1 class="text-center text-gray-700 text-2xl font-semibold mb-6 tracking-wide">Load Balancer Metrics</h1>
+        
+        {{if .SmartMode}}
+        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-gray-700">System Status</h2>
+                <span class="inline-block px-3 py-1 rounded-full font-medium text-sm {{if eq .State "RUNNING"}}bg-green-500 text-white{{else if eq .State "STOPPED"}}bg-red-500 text-white{{else if eq .State "PAUSED"}}bg-yellow-500 text-white{{else}}bg-gray-500 text-white{{end}}">
+                    {{.State}}
+                </span>
+            </div>
+        </div>
+        {{end}}
+
+        <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+            <h3 class="text-sm font-semibold text-blue-700 mb-2">Current Algorithm</h3>
+            <p class="text-blue-600 font-mono text-sm">{{.Algorithm}}</p>
+        </div>
+
+        <div class="overflow-x-auto rounded-lg mt-4">
+            <table class="w-full border-separate border-spacing-0 bg-white">
+                <thead>
+                    <tr>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Backend</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Request Count</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Success Count</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Failure Count</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Total Latency</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Avg Latency</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Consecutive Fails</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Consecutive Success</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Timeout Rate</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Health Status</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Last Status</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Active Connections</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Weight</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Current Weight</th>
+                        <th class="bg-blue-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $key, $backend := .Backends}}
+                    <tr class="hover:bg-gray-100 transition-colors">
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs">{{$key}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.RequestCount}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.SuccessCount}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.FailureCount}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.TotalLatency}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.AvgLatency}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.ConsecutiveFails}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.ConsecutiveSuccess}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.TimeoutRate}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs">
+                            <span class="inline-block px-2.5 py-1 rounded-full font-medium text-center text-xs {{if $backend.Metrics.IsHealthy}}bg-green-500 text-white{{else}}bg-red-500 text-white{{end}}">
+                                {{if $backend.Metrics.IsHealthy}}healthy{{else}}unhealthy{{end}}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs">{{$backend.Metrics.LastStatus}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.ActiveConnections}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.Weight}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{$backend.Metrics.CurrentWeight}}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-xs">
+                            <button onclick="resetMetrics('{{$key}}')" class="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition text-xs">
+                                Restart Metrics
+                            </button>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="mt-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Errors History</h2>
+                <div class="flex gap-2">
+                    <button id="toggleErrorHistory" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-xs hover:bg-blue-600 transition">
+                        Show History
+                    </button>
+                    <button id="deleteSelectedHistory" class="px-4 py-2 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600 transition hidden">
+                        Delete Selected
+                    </button>
+                </div>
+            </div>
+            <div id="errorHistoryContent" class="overflow-x-auto rounded-lg" style="display: none;">
+                <table class="w-full border-separate border-spacing-0 bg-white">
+                    <thead>
+                        <tr>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">
+                                <input type="checkbox" id="selectAllHistory" class="form-checkbox h-4 w-4 text-white">
+                            </th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Backend</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Status</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Time</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Details</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Consecutive Fails</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Timeout Rate</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Last Status</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Failure Count</th>
+                            <th class="bg-red-500 text-white font-medium text-xs py-3 px-4 sticky top-0 z-10">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="error-history">
+                        {{range .Errors}}
+                        <tr class="hover:bg-gray-100 transition-colors">
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">
+                                <input type="checkbox" class="history-checkbox form-checkbox h-4 w-4 text-green-500" data-id="{{.ID}}">
+                            </td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">{{.Backend}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">{{.Status}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">{{.Time}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">{{.Details}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{.ConsecutiveFails}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{.TimeoutBreak}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">{{.LastStatus}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">{{.FailureCount}}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">
+                                <button onclick="deleteErrorHistory('{{.ID}}')" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition text-xs">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+            <h3 class="text-sm font-semibold text-gray-700 mb-4">Change Load Balancing Algorithm</h3>
+            <form id="change-algorithm-form" class="flex flex-col md:flex-row gap-2 w-full">
+                <select name="name" class="p-2.5 border border-gray-200 rounded-lg text-xs bg-white cursor-pointer focus:outline-none focus:border-blue-500 transition w-full md:w-auto">
+                    <option value="ROUND_ROBIN" {{if eq .Algorithm "ROUND_ROBIN"}}selected{{end}}>Round Robin</option>
+                    <option value="LEAST_CONNECTION" {{if eq .Algorithm "LEAST_CONNECTION"}}selected{{end}}>Least Connections</option>
+                    <option value="WEIGHTED_LEAST_CONNECTION" {{if eq .Algorithm "WEIGHTED_LEAST_CONNECTION"}}selected{{end}}>Weighted Least Connection</option>
+                    <option value="WEIGHTED_ROUND_ROBIN" {{if eq .Algorithm "WEIGHTED_ROUND_ROBIN"}}selected{{end}}>Weighted Round Robin</option>
+                    <option value="RANDOM" {{if eq .Algorithm "RANDOM"}}selected{{end}}>Random</option>
+                    <option value="WEIGHTED_RANDOM" {{if eq .Algorithm "WEIGHTED_RANDOM"}}selected{{end}}>Weighted Random</option>
+                    <option value="IP_HASH" {{if eq .Algorithm "IP_HASH"}}selected{{end}}>IP Hash</option>
+                </select>
+                <button type="submit" class="p-2.5 bg-blue-500 text-white rounded-lg text-xs hover:bg-teal-600 transition w-full md:w-auto">Apply Algorithm</button>
+            </form>
+        </div>
+        <div id="feedback-message" class="mt-2 text-center text-xs p-2 rounded-lg hidden"></div>
+    </div>
+    <script>
+        const toggleButton = document.getElementById('toggleErrorHistory');
+        const errorHistoryContent = document.getElementById('errorHistoryContent');
+        const deleteSelectedButton = document.getElementById('deleteSelectedHistory');
+        const selectAllCheckbox = document.getElementById('selectAllHistory');
+        
+        const savedState = localStorage.getItem('historyVisible');
+        if (savedState === 'true') {
+            errorHistoryContent.style.display = 'block';
+            toggleButton.textContent = 'Hide History';
+        } else {
+            errorHistoryContent.style.display = 'none';
+            toggleButton.textContent = 'Show History';
+        }
+        
+        toggleButton.addEventListener('click', function() {
+            if (errorHistoryContent.style.display === 'none') {
+                errorHistoryContent.style.display = 'block';
+                toggleButton.textContent = 'Hide History';
+                localStorage.setItem('historyVisible', 'true');
+            } else {
+                errorHistoryContent.style.display = 'none';
+                toggleButton.textContent = 'Show History';
+                localStorage.setItem('historyVisible', 'false');
+            }
+        });
+
+        selectAllCheckbox.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.history-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateDeleteButtonVisibility();
+        });
+
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('history-checkbox')) {
+                updateDeleteButtonVisibility();
+                updateSelectAllCheckbox();
+            }
+        });
+
+        function updateDeleteButtonVisibility() {
+            const checkedBoxes = document.querySelectorAll('.history-checkbox:checked');
+            deleteSelectedButton.style.display = checkedBoxes.length > 0 ? 'block' : 'none';
+        }
+
+        function updateSelectAllCheckbox() {
+            const checkboxes = document.querySelectorAll('.history-checkbox');
+            const checkedBoxes = document.querySelectorAll('.history-checkbox:checked');
+            selectAllCheckbox.checked = checkboxes.length === checkedBoxes.length;
+        }
+
+        deleteSelectedButton.addEventListener('click', async function() {
+            const checkedBoxes = document.querySelectorAll('.history-checkbox:checked');
+            const ids = Array.from(checkedBoxes).map(checkbox => parseInt(checkbox.dataset.id));
+            
+            if (ids.length === 0) {
+                alert('Please select at least one item to delete');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete ${ids.length} selected history items?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/delete-error-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer your-secret-token'
+                    },
+                    body: JSON.stringify({
+                        ids: ids
+                    })
+                });
+
+                if (response.ok) {
+                    updateErrorHistory();
+                    deleteSelectedButton.style.display = 'none';
+                    selectAllCheckbox.checked = false;
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to delete error history');
+                }
+            } catch (error) {
+                console.error('Error deleting error history:', error);
+                alert(error.message || 'Failed to delete error history');
+            }
+        });
+
+        async function updateErrorHistory() {
+            try {
+                const response = await fetch('/error-history', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer your-secret-token'
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const tbody = document.getElementById('error-history');
+                    tbody.innerHTML = data.map(error => `
+                        <tr class="hover:bg-gray-100 transition-colors">
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">
+                                <input type="checkbox" class="history-checkbox form-checkbox h-4 w-4 text-green-500" data-id="${error.ID}">
+                            </td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">${error.Backend}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">${error.Status}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">${error.Time}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">${error.Details}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">${error.ConsecutiveFails}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">${error.TimeoutBreak}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">${error.LastStatus}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs font-mono">${error.FailureCount}</td>
+                            <td class="py-3 px-4 border-b border-gray-200 text-xs">
+                                <button onclick="deleteErrorHistory('${error.ID}')" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition text-xs">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error fetching error history:', error);
+            }
+        }
+
+        async function deleteErrorHistory(id) {
+            if (!confirm('Are you sure you want to delete this error history?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/delete-error-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer your-secret-token'
+                    },
+                    body: JSON.stringify({
+                        id: parseInt(id)
+                    })
+                });
+
+                if (response.ok) {
+                    updateErrorHistory();
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to delete error history');
+                }
+            } catch (error) {
+                console.error('Error deleting error history:', error);
+                alert(error.message || 'Failed to delete error history');
+            }
+        }
+
+        async function resetMetrics(backendId) {
+            if (!confirm('Are you sure you want to reset metrics for ' + backendId + '?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/reset-metrics', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer your-secret-token'
+                    },
+                    body: JSON.stringify({
+                        backend_id: backendId
+                    })
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    throw new Error('Failed to reset metrics');
+                }
+            } catch (error) {
+                console.error('Error resetting metrics:', error);
+                alert('Failed to reset metrics');
+            }
+        }
+
+        document.getElementById('change-algorithm-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const selectElement = this.querySelector('select[name="name"]');
+            const algorithm = selectElement.value;
+            const feedbackMessage = document.getElementById('feedback-message');
+
+            try {
+                const response = await fetch('/change-load-balancer?name=' + encodeURIComponent(algorithm), {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer your-secret-token'
+                    },
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    feedbackMessage.textContent = 'Successfully changed to ' + result + ' algorithm';
+                    feedbackMessage.classList.remove('bg-red-500', 'text-white');
+                    feedbackMessage.classList.add('bg-green-500', 'text-white');
+                } else {
+                    throw new Error('Failed to change algorithm');
+                }
+            } catch (error) {
+                feedbackMessage.textContent = 'Error: ' + error.message;
+                feedbackMessage.classList.remove('bg-green-500', 'text-white');
+                feedbackMessage.classList.add('bg-red-500', 'text-white');
+            }
+
+            feedbackMessage.classList.remove('hidden');
+            setTimeout(() => {
+                feedbackMessage.classList.add('hidden');
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

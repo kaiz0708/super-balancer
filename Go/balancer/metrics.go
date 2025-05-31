@@ -2,103 +2,88 @@ package balancer
 
 import (
 	"Go/config"
-	"fmt"
-	"os"
-	"os/exec"
-	"runtime"
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
-var countRequestLock sync.Mutex
-var totalRequests uint64 = 0
-
-const updateEvery = 1
-
-func UpdateMetrics(backend string, latency time.Duration, success bool, status int) {
+func UpdateMetrics(backend string, latency time.Duration, status int) {
 	backendMetric := config.MetricsMap[backend]
 	backendMetric.Mutex.Lock()
 	defer backendMetric.Mutex.Unlock()
 	m := backendMetric.Metrics
+	m.SuccessCount++
+	m.ConsecutiveFails = 0
 	m.RequestCount++
 	m.TotalLatency += latency
 	m.LastLatency = latency
 	m.LastChecked = time.Now()
 	m.LastStatus = status
 
-	if success {
-		m.SuccessCount++
-		m.ConsecutiveFails = 0
-		m.IsHealthy = true
-	} else {
-		m.FailureCount++
-		m.ConsecutiveFails++
-		if m.ConsecutiveFails >= 3 {
-			m.IsHealthy = false
-		}
-	}
-
 	if m.RequestCount > 0 {
 		m.AvgLatency = m.TotalLatency / time.Duration(m.RequestCount)
 	}
+}
 
-	countRequestLock.Lock()
-	totalRequests++
-	countRequestLock.Unlock()
+func UpdateResetMetrics(url string) {
+	backend := config.MetricsMap[url]
+	backend.Mutex.Lock()
+	defer backend.Mutex.Unlock()
+	backend.Metrics.RequestCount = 0
+	backend.Metrics.SuccessCount = 0
+	backend.Metrics.FailureCount = 0
+	backend.Metrics.TotalLatency = 0
+	backend.Metrics.AvgLatency = 0
+	backend.Metrics.ConsecutiveFails = 0
+	backend.Metrics.ConsecutiveSuccess = 0
+	backend.Metrics.TimeoutRate = 0
+	backend.Metrics.LastStatus = 0
+	backend.Metrics.ActiveConnections = 0
+	backend.Metrics.CurrentWeight = backend.Metrics.Weight
+	backend.Metrics.IsHealthy = true
+}
 
-	if totalRequests%updateEvery == 0 {
-		clearTerminal()
-		logMetrics()
+func UpdateBackendUnhealthy(backend string, status int) {
+	backendMetric := config.MetricsMap[backend]
+	backendMetric.Mutex.Lock()
+	defer backendMetric.Mutex.Unlock()
+	m := backendMetric.Metrics
+	m.FailureCount++
+	m.RequestCount++
+	m.ConsecutiveFails++
+	m.LastStatus = status
+	failRate := float64(m.FailureCount) / float64(m.RequestCount)
+	if (m.ConsecutiveFails >= config.ConfigSystem.ConsecutiveFails || failRate >= config.ConfigSystem.FailRate || m.TimeoutRate >= config.ConfigSystem.TimeOutRate) && m.IsHealthy {
+		m.IsHealthy = false
+		config.GlobalDB.InsertMetrics(backend, config.Unhealthy, m)
+	}
+}
+
+func UpdateBackendRecovering(backend string) {
+	backendMetric := config.MetricsMap[backend]
+	backendMetric.Mutex.Lock()
+	defer backendMetric.Mutex.Unlock()
+	m := backendMetric.Metrics
+	if m.ConsecutiveSuccess >= config.ConfigSystem.ConsecutiveSuccess && !m.IsHealthy {
+		m.IsHealthy = true
+		m.ConsecutiveFails = 0
+		m.AvgLatency = 0
+		m.TotalLatency = 0
+		m.LastLatency = 0
+		m.TimeoutRate = 0
+		m.ConsecutiveSuccess = 0
+		m.SuccessCount = 0
+		m.RequestCount = 1
+		m.FailureCount = 0
+		config.GlobalDB.InsertMetrics(backend, config.Recovery, m)
 	}
 }
 
 func UpdateActiveConnectionMetrics(backend string, state bool) {
 	backendMetric := config.MetricsMap[backend]
-	backendMetric.Mutex.Lock()
-	defer backendMetric.Mutex.Unlock()
 	m := backendMetric.Metrics
 	if state {
-		m.ActiveConnections++
+		atomic.AddInt64(&m.ActiveConnections, 1)
 	} else {
-		m.ActiveConnections--
-	}
-}
-
-func clearTerminal() {
-	switch runtime.GOOS {
-	case "windows":
-		cmd := exec.Command("cmd", "/c", "cls")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	default:
-		fmt.Print("\033[2J\033[H") // ANSI escape code to clear screen
-	}
-}
-
-func logMetrics() {
-	fmt.Println("======== Backend Metrics ========")
-	for backend, m := range config.MetricsMap {
-		if _, ok := config.MetricsMap[backend]; ok {
-			target := m.Metrics
-			successRate := float64(target.SuccessCount) / float64(target.RequestCount)
-			errorRate := float64(target.FailureCount) / float64(target.RequestCount)
-			avgLatencyMs := float64(target.AvgLatency.Microseconds()) / 1000.0
-			lastLatencyMs := float64(target.LastLatency.Microseconds()) / 1000.0
-			fmt.Printf("Backend: %s\n", backend)
-			fmt.Printf("  - Requests:        %d\n", target.RequestCount)
-			fmt.Printf("  - Successes:       %d\n", target.SuccessCount)
-			fmt.Printf("  - Failures:        %d\n", target.FailureCount)
-			fmt.Printf("  - Success Rate:    %.2f%%\n", successRate*100)
-			fmt.Printf("  - Error Rate:      %.2f%%\n", errorRate*100)
-			fmt.Printf("  - Avg Latency:     %.2f ms\n", avgLatencyMs)
-			fmt.Printf("  - Last Latency:    %.2f ms\n", lastLatencyMs)
-			fmt.Printf("  - Healthy:         %v\n", target.IsHealthy)
-			fmt.Printf("  - Last Status:     %d\n", target.LastStatus)
-			fmt.Printf("  - Last Checked:    %s\n", target.LastChecked.Format(time.RFC3339))
-			fmt.Printf("  - ActiveConnection:%d\n", target.ActiveConnections)
-			fmt.Printf("  - Weight:        	 %d\n", target.Weight)
-			fmt.Printf("  - CurrentWeight:   %d\n", target.CurrentWeight)
-			fmt.Println("---------------------------------------")
-		}
+		atomic.AddInt64(&m.ActiveConnections, -1)
 	}
 }

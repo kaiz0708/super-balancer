@@ -1,4 +1,4 @@
-package algo
+package algo_default
 
 import (
 	"Go/config"
@@ -6,7 +6,7 @@ import (
 )
 
 func Random() string {
-	backend := config.BackendServers
+	backend := config.ConfigSystem.Servers
 	metrics := config.MetricsMap
 	selected := ""
 

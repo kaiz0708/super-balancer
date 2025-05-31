@@ -1,27 +1,14 @@
-package algo
+package algo_default
 
 import (
 	"Go/config"
+	"Go/utils"
 	"math"
 )
 
-func SumWeightMetrics() int64 {
-	metrics := config.MetricsMap
-	sumWeight := 0
-
-	for _, m := range metrics {
-		target := m.Metrics
-
-		if target.IsHealthy {
-			sumWeight += int(target.Weight)
-		}
-	}
-	return int64(sumWeight)
-}
-
 func WeightedRoundRobin() string {
 	metrics := config.MetricsMap
-	sumWeight := SumWeightMetrics()
+	sumWeight := utils.SumWeightMetrics()
 	selected := ""
 	maxCurrentWeight := int64(math.MinInt64)
 
@@ -32,7 +19,7 @@ func WeightedRoundRobin() string {
 		}
 		currentWeight := target.CurrentWeight + target.Weight
 
-		if maxCurrentWeight <= currentWeight && target.IsHealthy {
+		if maxCurrentWeight <= currentWeight {
 			maxCurrentWeight = currentWeight
 			selected = backend
 		}

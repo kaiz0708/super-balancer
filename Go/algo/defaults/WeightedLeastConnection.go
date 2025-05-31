@@ -1,14 +1,14 @@
-package algo
+package algo_default
 
 import (
 	"Go/config"
 	"math"
 )
 
-func LeastConnection() string {
+func WeightedLeastConnection() string {
 	metrics := config.MetricsMap
+	maxLoadBackend := math.MaxFloat64
 	selected := ""
-	minConnection := int64(math.MaxInt64)
 
 	for backend, m := range metrics {
 		target := m.Metrics
@@ -17,10 +17,13 @@ func LeastConnection() string {
 			continue
 		}
 
-		if target.ActiveConnections <= minConnection && target.IsHealthy {
-			minConnection = target.ActiveConnections
+		load := float64(target.ActiveConnections) / float64(m.Metrics.Weight)
+
+		if load <= maxLoadBackend {
+			maxLoadBackend = load
 			selected = backend
 		}
 	}
+
 	return selected
 }

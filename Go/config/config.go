@@ -66,7 +66,7 @@ type Config struct {
 type BackendConfig struct {
 	UrlConfig        string `yaml:"url"`
 	WeightConfig     int64  `yaml:"weight"`
-	HealthPathConfig string `json:"healthPath"`
+	HealthPathConfig string `yaml:"healthPath"`
 }
 
 type AuthConfig struct {

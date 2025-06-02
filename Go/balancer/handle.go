@@ -23,7 +23,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	if username == config.ConfigSystem.AuthBasic.Username && password == config.ConfigSystem.AuthBasic.Password {
-		config.ActiveLogin = true
+		config.ConfigDefaultSystem.ActiveLogin = true
 		http.Redirect(w, r, "/metrics", http.StatusSeeOther)
 	} else {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
@@ -35,17 +35,13 @@ func CheckUnhealthyBackend() {
 		Timeout: time.Duration(config.ConfigSystem.TimeOutDelay) * time.Second,
 	}
 
-	log.Println("backend metrics :", config.MetricsMap)
-
 	for backend, m := range config.MetricsMap {
-		log.Println("backend api health:", backend+m.HealthPath)
 		if !m.Metrics.IsHealthy && m.HealthPath != "" {
 			go func(backend string, m *config.BackendMetrics) {
 				url := backend + m.HealthPath
 
 				resp, err := client.Get(url)
 				if err != nil {
-					log.Println("backend api health errors :", err)
 					return
 				}
 				defer resp.Body.Close()
@@ -118,6 +114,7 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 func ChangeAlgoLoadBalancer(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	config.ConfigSystem.Algorithm = name
+	config.ConfigDefaultSystem.AlgorithmUserChoose = name
 	json.NewEncoder(w).Encode(name)
 }
 
@@ -198,7 +195,6 @@ func ResetMetrics(w http.ResponseWriter, r *http.Request) {
 }
 
 func StartHealthCheck(interval time.Duration) {
-	log.Println("execute")
 	go func() {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()

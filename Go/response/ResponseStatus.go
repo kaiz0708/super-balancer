@@ -26,11 +26,11 @@ func HandleStatusHTML(w http.ResponseWriter, r *http.Request) {
 		Backends:  config.MetricsMap,
 		Algorithm: config.ConfigSystem.Algorithm,
 		Errors:    errors,
-		State:     config.StateSystem,
+		State:     config.ConfigDefaultSystem.StateSystem,
 		SmartMode: config.ConfigSystem.SmartMode,
 	}
 
-	if !config.ActiveLogin {
+	if !config.ConfigDefaultSystem.ActiveLogin {
 		tmpl, err := template.ParseFS(templates, "templates/login.html")
 		if err != nil {
 			fmt.Println("Error parsing template:", err)

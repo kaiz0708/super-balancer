@@ -46,12 +46,13 @@ func main() {
 	}
 
 	config.ConfigSystem.Algorithm = cfg.Algorithm
+	config.ConfigDefaultSystem.AlgorithmUserChoose = cfg.Algorithm
 	config.ConfigSystem.ConsecutiveFails = cfg.ConsecutiveFails
 	config.ConfigSystem.ConsecutiveSuccess = cfg.ConsecutiveSuccess
 	config.ConfigSystem.FailRate = cfg.FailRate
 	config.ConfigSystem.TimeOutRate = cfg.TimeOutRate
 	config.ConfigSystem.TimeOutDelay = cfg.TimeOutDelay
-	config.ActiveLogin = false
+	config.ConfigDefaultSystem.ActiveLogin = false
 	config.ConfigSystem.SmartMode = cfg.SmartMode
 	config.ConfigSystem.AuthBasic = config.AuthConfig{
 		Username: cfg.AuthBasic.Username,

@@ -63,6 +63,12 @@ type Config struct {
 	RateLimit          int64           `yaml:"rateLimit"`
 }
 
+type DefaultSystem struct {
+	StateSystem         string
+	ActiveLogin         bool
+	AlgorithmUserChoose string
+}
+
 type BackendConfig struct {
 	UrlConfig        string `yaml:"url"`
 	WeightConfig     int64  `yaml:"weight"`
@@ -78,12 +84,10 @@ var MetricsMap = map[string]*BackendMetrics{}
 
 var ConfigSystem Config
 
-var StateSystem string
-
-var ActiveLogin bool
+var ConfigDefaultSystem DefaultSystem
 
 func InitServer() {
-	StateSystem = Stable
+	ConfigDefaultSystem.StateSystem = Stable
 	urls := ConfigSystem.Servers
 	for _, url := range urls {
 		MetricsMap[url.UrlConfig] = &BackendMetrics{

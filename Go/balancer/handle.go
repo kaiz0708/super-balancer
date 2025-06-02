@@ -46,6 +46,7 @@ func CheckUnhealthyBackend() {
 				resp, err := client.Get(url)
 				if err != nil {
 					log.Println("backend api health errors :", err)
+					return
 				}
 				defer resp.Body.Close()
 

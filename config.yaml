@@ -1,0 +1,28 @@
+algorithm: "ROUND_ROBIN"
+
+# List of backend servers
+servers:
+  - urlConfig: "http://host.docker.internal:3001"
+    weightConfig: 1
+    healthPathConfig: "/api/health"
+  - urlConfig: "http://host.docker.internal:3002"
+    weightConfig: 1
+    healthPathConfig: "/api/health"
+
+# Health check settings
+consecutiveFails: 100
+consecutiveSuccess: 100
+failRate: 0.5
+timeOutRate: 100
+timeOutDelay: 5
+
+# Authentication for metrics dashboard
+authBasic:
+  username: "admin"
+  password: "admin"
+
+# Enable/disable smart mode for automatic failover
+smartMode: true
+
+# Rate limiting
+rateLimit: 1000 

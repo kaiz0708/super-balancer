@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -42,6 +43,7 @@ func CheckUnhealthyBackend() {
 
 				resp, err := client.Get(url)
 				if err != nil {
+					fmt.Println("errors : ", err)
 					return
 				}
 				defer resp.Body.Close()

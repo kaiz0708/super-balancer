@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -36,22 +35,24 @@ func CheckUnhealthyBackend() {
 		Timeout: time.Duration(config.ConfigSystem.TimeOutDelay) * time.Second,
 	}
 
+	log.Println("backend metrics :", config.MetricsMap)
+
 	for backend, m := range config.MetricsMap {
+		log.Println("backend api health:", backend+m.HealthPath)
 		if !m.Metrics.IsHealthy && m.HealthPath != "" {
 			go func(backend string, m *config.BackendMetrics) {
 				url := backend + m.HealthPath
 
 				resp, err := client.Get(url)
 				if err != nil {
-					fmt.Println("errors : ", err)
-					return
+					log.Println("backend api health errors :", err)
 				}
 				defer resp.Body.Close()
 
 				if resp.StatusCode == 200 && m.Metrics.TimeoutRate <= config.ConfigSystem.TimeOutRate {
-					config.MetricsMap[backend].Mutex.Lock()
+					m.Mutex.Lock()
 					config.MetricsMap[backend].Metrics.ConsecutiveSuccess++
-					config.MetricsMap[backend].Mutex.Unlock()
+					m.Mutex.Unlock()
 					UpdateBackendRecovering(backend)
 				}
 			}(backend, m)
@@ -196,6 +197,7 @@ func ResetMetrics(w http.ResponseWriter, r *http.Request) {
 }
 
 func StartHealthCheck(interval time.Duration) {
+	log.Println("execute")
 	go func() {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()

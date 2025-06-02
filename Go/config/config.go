@@ -82,6 +82,8 @@ var StateSystem string
 
 var ActiveLogin bool
 
+var AlgorithmUserChoose string
+
 func InitServer() {
 	StateSystem = Stable
 	urls := ConfigSystem.Servers

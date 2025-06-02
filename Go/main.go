@@ -46,6 +46,7 @@ func main() {
 	}
 
 	config.ConfigSystem.Algorithm = cfg.Algorithm
+	config.AlgorithmUserChoose = cfg.Algorithm
 	config.ConfigSystem.ConsecutiveFails = cfg.ConsecutiveFails
 	config.ConfigSystem.ConsecutiveSuccess = cfg.ConsecutiveSuccess
 	config.ConfigSystem.FailRate = cfg.FailRate

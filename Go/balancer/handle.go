@@ -118,6 +118,7 @@ func HttpProxy(backend string, w http.ResponseWriter, r *http.Request) {
 func ChangeAlgoLoadBalancer(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	config.ConfigSystem.Algorithm = name
+	config.AlgorithmUserChoose = name
 	json.NewEncoder(w).Encode(name)
 }
 

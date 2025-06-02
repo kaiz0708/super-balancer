@@ -32,6 +32,7 @@ func AnalyzeSystemState() string {
 		return config.HighLatency
 	}
 	config.StateSystem = config.Stable
+	config.ConfigSystem.Algorithm = config.AlgorithmUserChoose
 
 	return config.Stable
 }

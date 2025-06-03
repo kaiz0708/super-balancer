@@ -2,6 +2,8 @@ package balancer
 
 import (
 	"Go/config"
+	"Go/factory"
+	"net/http"
 )
 
 func AnalyzeSystemState() string {
@@ -36,4 +38,23 @@ func AnalyzeSystemState() string {
 	}
 
 	return config.Stable
+}
+
+func SelectServer(state string, r *http.Request) string {
+	selected := ""
+	if !config.ConfigSystem.SmartMode {
+		selected = factory.Factory.GetStrategy(config.ConfigSystem.Algorithm).SelectServer(r)
+		return selected
+	}
+	switch state {
+	case config.ManyFailed:
+		config.ConfigSystem.Algorithm = config.WeightedSuccessRateBalancer
+		selected = factory.Factory.GetStrategy(config.WeightedSuccessRateBalancer).SelectServer(r)
+	case config.HighLatency:
+		selected = factory.Factory.GetStrategy(config.LowLatencyWeightedBalancer).SelectServer(r)
+	default:
+		config.ConfigSystem.Algorithm = config.ConfigDefaultSystem.AlgorithmUserChoose
+		selected = factory.Factory.GetStrategy(config.ConfigDefaultSystem.AlgorithmUserChoose).SelectServer(r)
+	}
+	return selected
 }

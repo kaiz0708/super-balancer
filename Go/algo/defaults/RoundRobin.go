@@ -2,12 +2,15 @@ package algo_default
 
 import (
 	"Go/config"
+	"net/http"
 	"sync/atomic"
 )
 
 var countRequest uint64
 
-func RoundRobin() string {
+type RoundRobinStrategy struct{}
+
+func (r *RoundRobinStrategy) SelectServer(t *http.Request) string {
 	metrics := config.MetricsMap
 	backend := config.ConfigSystem.Servers
 	n := len(backend)

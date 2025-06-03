@@ -7,8 +7,10 @@ import (
 	"net/http"
 )
 
-func IpHash(r *http.Request) string {
-	ip := utils.GetClientIP(r)
+type IpHashStrategy struct{}
+
+func (r *IpHashStrategy) SelectServer(t *http.Request) string {
+	ip := utils.GetClientIP(t)
 	backends := config.ConfigSystem.Servers
 	metrics := config.MetricsMap
 	selected := ""

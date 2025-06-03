@@ -3,9 +3,12 @@ package algo_default
 import (
 	"Go/config"
 	"math"
+	"net/http"
 )
 
-func WeightedLeastConnection() string {
+type WeightedLeastConnectionStrategy struct{}
+
+func (r *WeightedLeastConnectionStrategy) SelectServer(t *http.Request) string {
 	metrics := config.MetricsMap
 	maxLoadBackend := math.MaxFloat64
 	selected := ""

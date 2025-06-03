@@ -1,7 +1,6 @@
 package balancer
 
 import (
-	"Go/algo"
 	"Go/config"
 	"Go/response"
 	"context"
@@ -211,6 +210,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		response.CustomAllFailed(w)
 		return
 	}
-	target := algo.ChooseAlgorithm(pickState, r)
+	target := SelectServer(pickState, r)
 	HttpProxy(target, w, r)
 }

@@ -4,9 +4,12 @@ import (
 	"Go/config"
 	"Go/utils"
 	"math"
+	"net/http"
 )
 
-func WeightedRoundRobin() string {
+type WeightedRoundRobinStrategy struct{}
+
+func (r *WeightedRoundRobinStrategy) SelectServer(t *http.Request) string {
 	metrics := config.MetricsMap
 	sumWeight := utils.SumWeightMetrics()
 	selected := ""

@@ -3,6 +3,7 @@ package main
 import (
 	"Go/balancer"
 	"Go/config"
+	"Go/factory"
 	"Go/middleware"
 	"Go/response"
 	"fmt"
@@ -64,6 +65,7 @@ func main() {
 	balancer.StartHealthCheck(1 * time.Second)
 	rateLimiter := middleware.NewRateLimiter(cfg.RateLimit)
 	corsMiddleware := middleware.NewCORSMiddleware()
+	factory.Factory = *factory.NewLoadBalancerFactory()
 	http.Handle("/", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.Handler))))
 	http.Handle("/change-load-balancer", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.ChangeAlgoLoadBalancer))))
 	http.Handle("/metrics", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(response.HandleStatusHTML))))

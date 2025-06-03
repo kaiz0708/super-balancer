@@ -3,9 +3,12 @@ package algo_default
 import (
 	"Go/config"
 	"math"
+	"net/http"
 )
 
-func LeastConnection() string {
+type LeastConnectionStrategy struct{}
+
+func (r *LeastConnectionStrategy) SelectServer(t *http.Request) string {
 	metrics := config.MetricsMap
 	selected := ""
 	minConnection := int64(math.MaxInt64)

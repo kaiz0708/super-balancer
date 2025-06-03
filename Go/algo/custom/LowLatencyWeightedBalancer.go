@@ -4,10 +4,13 @@ import (
 	"Go/config"
 	"Go/utils"
 	"math"
+	"net/http"
 	"time"
 )
 
-func LowLatencyWeightedBalancer() string {
+type LowLatencyWeightedBalancerStrategy struct{}
+
+func (r *LowLatencyWeightedBalancerStrategy) SelectServer(t *http.Request) string {
 	metrics := config.MetricsMap
 	selected := ""
 	minLatency := time.Duration(math.MaxInt64)

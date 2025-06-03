@@ -3,9 +3,12 @@ package custom
 import (
 	"Go/config"
 	"math"
+	"net/http"
 )
 
-func WeightedSuccessRateBalancer() string {
+type WeightedSuccessRateBalancer struct{}
+
+func (r *WeightedSuccessRateBalancer) SelectServer(t *http.Request) string {
 	metrics := config.MetricsMap
 	selected := ""
 	highestScore := -1.0

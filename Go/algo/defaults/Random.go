@@ -3,9 +3,12 @@ package algo_default
 import (
 	"Go/config"
 	"math/rand"
+	"net/http"
 )
 
-func Random() string {
+type RandomStrategy struct{}
+
+func (r *RandomStrategy) SelectServer(t *http.Request) string {
 	backend := config.ConfigSystem.Servers
 	metrics := config.MetricsMap
 	selected := ""

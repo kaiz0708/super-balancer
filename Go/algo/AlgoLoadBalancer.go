@@ -7,7 +7,6 @@ import (
 	"net/http"
 )
 
-
 func ChooseAlgorithm(state string, r *http.Request) string {
 	selected := ""
 	if !config.ConfigSystem.SmartMode {
@@ -22,6 +21,7 @@ func ChooseAlgorithm(state string, r *http.Request) string {
 		config.ConfigSystem.Algorithm = config.LowLatencyWeightedBalancer
 		selected = custom.LowLatencyWeightedBalancer()
 	default:
+		config.ConfigSystem.Algorithm = config.ConfigDefaultSystem.AlgorithmUserChoose
 		selected = AlgoLoadBalancer(config.ConfigSystem.Algorithm, r)
 	}
 	return selected

@@ -31,8 +31,9 @@ func AnalyzeSystemState() string {
 		config.ConfigDefaultSystem.StateSystem = config.HighLatency
 		return config.HighLatency
 	}
-	config.ConfigDefaultSystem.StateSystem = config.Stable
-	config.ConfigSystem.Algorithm = config.ConfigDefaultSystem.AlgorithmUserChoose
+	if healthyCount == totalBackends {
+		config.ConfigDefaultSystem.StateSystem = config.Stable
+	}
 
 	return config.Stable
 }

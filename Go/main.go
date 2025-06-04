@@ -14,6 +14,35 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+func setupDefaultValues(cfg *config.Config) {
+	if cfg.ConsecutiveFails == 0 {
+		cfg.ConsecutiveFails = config.DefaultConsecutiveFails
+	}
+	if cfg.ConsecutiveSuccess == 0 {
+		cfg.ConsecutiveSuccess = config.DefaultConsecutiveSuccess
+	}
+	if cfg.FailRate == 0 {
+		cfg.FailRate = config.DefaultFailRate
+	}
+	if cfg.TimeOutRate == 0 {
+		cfg.TimeOutRate = config.DefaultTimeOutRate
+	}
+	if cfg.TimeOutDelay == 0 {
+		cfg.TimeOutDelay = config.DefaultTimeOutDelay
+	}
+	if cfg.HealthCheckInterval <= 0 {
+		cfg.HealthCheckInterval = config.DefaultHealthCheckInterval
+	}
+	if cfg.RateLimit <= 0 {
+		cfg.RateLimit = config.DefaultRateLimit
+	}
+	for i := range cfg.Servers {
+		if cfg.Servers[i].WeightConfig == 0 {
+			cfg.Servers[i].WeightConfig = config.DefaultWeight
+		}
+	}
+}
+
 func main() {
 	configFile := "config.yaml"
 	if envConfig := os.Getenv("CONFIG_FILE"); envConfig != "" {
@@ -37,6 +66,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	setupDefaultValues(&cfg)
+
 	config.ConfigSystem.Servers = make([]config.BackendConfig, len(cfg.Servers))
 	for i, b := range cfg.Servers {
 		config.ConfigSystem.Servers[i] = config.BackendConfig{
@@ -59,10 +90,12 @@ func main() {
 		Username: cfg.AuthBasic.Username,
 		Password: cfg.AuthBasic.Password,
 	}
+	config.ConfigSystem.HealthCheckInterval = cfg.HealthCheckInterval
+	config.ConfigSystem.RateLimit = cfg.RateLimit
 
 	config.NewDB(config.GetExecutableDir())
 	config.InitServer()
-	balancer.StartHealthCheck(1 * time.Second)
+	balancer.StartHealthCheck(time.Duration(config.ConfigSystem.HealthCheckInterval) * time.Second)
 	rateLimiter := middleware.NewRateLimiter(cfg.RateLimit)
 	corsMiddleware := middleware.NewCORSMiddleware()
 	factory.Factory = *factory.NewLoadBalancerFactory()

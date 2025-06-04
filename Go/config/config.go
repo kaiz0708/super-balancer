@@ -24,6 +24,14 @@ const (
 	Stable                      = "Stable"
 	ErrorConnectionRefused      = "connection refused"
 	ErrorNoSuchHost             = "no such host"
+	DefaultConsecutiveFails     = 100
+	DefaultConsecutiveSuccess   = 100
+	DefaultFailRate             = 0.5
+	DefaultTimeOutRate          = 100
+	DefaultTimeOutDelay         = 5000
+	DefaultHealthCheckInterval  = 30
+	DefaultRateLimit            = 100
+	DefaultWeight               = 1
 )
 
 type Metrics struct {
@@ -51,16 +59,17 @@ type BackendMetrics struct {
 }
 
 type Config struct {
-	Algorithm          string          `yaml:"algorithm"`
-	Servers            []BackendConfig `yaml:"backends"`
-	ConsecutiveFails   uint64          `yaml:"consecutiveFails"`
-	ConsecutiveSuccess uint64          `yaml:"consecutiveSuccess"`
-	FailRate           float64         `yaml:"failRate"`
-	TimeOutRate        uint64          `yaml:"timeOutBreak"`
-	TimeOutDelay       uint64          `yaml:"timeOutDelay"`
-	AuthBasic          AuthConfig      `yaml:"auth"`
-	SmartMode          bool            `yaml:"smartMode"`
-	RateLimit          int64           `yaml:"rateLimit"`
+	Algorithm           string          `yaml:"algorithm"`
+	Servers             []BackendConfig `yaml:"backends"`
+	ConsecutiveFails    uint64          `yaml:"consecutiveFails"`
+	ConsecutiveSuccess  uint64          `yaml:"consecutiveSuccess"`
+	FailRate            float64         `yaml:"failRate"`
+	TimeOutRate         uint64          `yaml:"timeOutBreak"`
+	TimeOutDelay        uint64          `yaml:"timeOutDelay"`
+	AuthBasic           AuthConfig      `yaml:"auth"`
+	SmartMode           bool            `yaml:"smartMode"`
+	RateLimit           int64           `yaml:"rateLimit"`
+	HealthCheckInterval int             `yaml:"healthCheckInterval"`
 }
 
 type DefaultSystem struct {
@@ -86,14 +95,31 @@ var ConfigSystem Config
 
 var ConfigDefaultSystem DefaultSystem
 
+func InitDefaultConfig() {
+	ConfigSystem = Config{
+		ConsecutiveFails:    DefaultConsecutiveFails,
+		ConsecutiveSuccess:  DefaultConsecutiveSuccess,
+		FailRate:            DefaultFailRate,
+		TimeOutRate:         DefaultTimeOutRate,
+		TimeOutDelay:        DefaultTimeOutDelay,
+		HealthCheckInterval: DefaultHealthCheckInterval,
+		RateLimit:           DefaultRateLimit,
+		SmartMode:           false,
+	}
+}
+
 func InitServer() {
 	ConfigDefaultSystem.StateSystem = Stable
 	urls := ConfigSystem.Servers
 	for _, url := range urls {
+		weight := url.WeightConfig
+		if weight == 0 {
+			weight = DefaultWeight
+		}
 		MetricsMap[url.UrlConfig] = &BackendMetrics{
 			Metrics: &Metrics{
 				IsHealthy: true,
-				Weight:    url.WeightConfig,
+				Weight:    weight,
 			},
 			HealthPath: url.HealthPathConfig,
 		}

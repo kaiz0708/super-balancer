@@ -68,6 +68,8 @@ func main() {
 
 	setupDefaultValues(&cfg)
 
+	//test
+
 	config.ConfigSystem.Servers = make([]config.BackendConfig, len(cfg.Servers))
 	for i, b := range cfg.Servers {
 		config.ConfigSystem.Servers[i] = config.BackendConfig{

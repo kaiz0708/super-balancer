@@ -1,5 +1,5 @@
 # Build stage
-FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS builder
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ ARG TARGETARCH
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o load-balancer main.go
 
 # Final stage
-FROM --platform=$TARGETPLATFORM alpine:latest
+FROM alpine:latest
 
 WORKDIR /app
 

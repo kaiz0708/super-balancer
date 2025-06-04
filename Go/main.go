@@ -103,10 +103,10 @@ func main() {
 	http.Handle("/error-history", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.GetErrorHistory))))
 	http.Handle("/reset-metrics", rateLimiter.HandleRateLimit(corsMiddleware.HandleCORS(http.HandlerFunc(balancer.ResetMetrics))))
 
-	fmt.Printf("🚀 Load balancer running with rate limit of %d requests/second per IP\n", cfg.RateLimit)
+	fmt.Printf("Load balancer running with rate limit of %d requests/second per IP\n", cfg.RateLimit)
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
-		fmt.Println("❌ Server failed to start:", err)
+		fmt.Println("Server failed to start:", err)
 		os.Exit(1)
 	}
 }

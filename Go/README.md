@@ -29,7 +29,7 @@ backends:
 consecutiveFails: 100     # Number of consecutive failures before marking backend as unhealthy
 consecutiveSuccess: 100   # Number of consecutive successes before marking backend as healthy
 failRate: 0.5          # Failure rate threshold (0.0 to 1.0)
-timeOutBreak: 100       # Timeout break duration in seconds
+timeOutRate: 100       # Timeout break duration in seconds
 timeOutDelay: 5        # Timeout delay in seconds
 
 # Authentication for metrics dashboard

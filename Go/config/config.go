@@ -28,8 +28,8 @@ const (
 	DefaultConsecutiveSuccess   = 100
 	DefaultFailRate             = 0.5
 	DefaultTimeOutRate          = 100
-	DefaultTimeOutDelay         = 5000
-	DefaultHealthCheckInterval  = 30
+	DefaultTimeOutDelay         = 5 // (second)
+	DefaultHealthCheckInterval  = 1 // (second)
 	DefaultRateLimit            = 100
 	DefaultWeight               = 1
 )
@@ -59,17 +59,16 @@ type BackendMetrics struct {
 }
 
 type Config struct {
-	Algorithm           string          `yaml:"algorithm"`
-	Servers             []BackendConfig `yaml:"backends"`
-	ConsecutiveFails    uint64          `yaml:"consecutiveFails"`
-	ConsecutiveSuccess  uint64          `yaml:"consecutiveSuccess"`
-	FailRate            float64         `yaml:"failRate"`
-	TimeOutRate         uint64          `yaml:"timeOutBreak"`
-	TimeOutDelay        uint64          `yaml:"timeOutDelay"`
-	AuthBasic           AuthConfig      `yaml:"auth"`
-	SmartMode           bool            `yaml:"smartMode"`
-	RateLimit           int64           `yaml:"rateLimit"`
-	HealthCheckInterval int             `yaml:"healthCheckInterval"`
+	Algorithm          string          `yaml:"algorithm"`
+	Servers            []BackendConfig `yaml:"backends"`
+	ConsecutiveFails   uint64          `yaml:"consecutiveFails"`
+	ConsecutiveSuccess uint64          `yaml:"consecutiveSuccess"`
+	FailRate           float64         `yaml:"failRate"`
+	TimeOutRate        uint64          `yaml:"timeOutRate"`
+	TimeOutDelay       uint64          `yaml:"timeOutDelay"`
+	AuthBasic          AuthConfig      `yaml:"auth"`
+	SmartMode          bool            `yaml:"smartMode"`
+	RateLimit          int64           `yaml:"rateLimit"`
 }
 
 type DefaultSystem struct {
@@ -97,14 +96,13 @@ var ConfigDefaultSystem DefaultSystem
 
 func InitDefaultConfig() {
 	ConfigSystem = Config{
-		ConsecutiveFails:    DefaultConsecutiveFails,
-		ConsecutiveSuccess:  DefaultConsecutiveSuccess,
-		FailRate:            DefaultFailRate,
-		TimeOutRate:         DefaultTimeOutRate,
-		TimeOutDelay:        DefaultTimeOutDelay,
-		HealthCheckInterval: DefaultHealthCheckInterval,
-		RateLimit:           DefaultRateLimit,
-		SmartMode:           false,
+		ConsecutiveFails:   DefaultConsecutiveFails,
+		ConsecutiveSuccess: DefaultConsecutiveSuccess,
+		FailRate:           DefaultFailRate,
+		TimeOutRate:        DefaultTimeOutRate,
+		TimeOutDelay:       DefaultTimeOutDelay,
+		RateLimit:          DefaultRateLimit,
+		SmartMode:          false,
 	}
 }
 

@@ -11,7 +11,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -37,29 +36,22 @@ func CheckUnhealthyBackend() {
 
 	for backend, m := range config.MetricsMap {
 		if !m.Metrics.IsHealthy && m.HealthPath != "" {
-			var wg sync.WaitGroup
+			go func(backend string, m *config.BackendMetrics) {
+				url := backend + m.HealthPath
 
-			wg.Add(int(config.ConfigSystem.ConsecutiveSuccess))
-			for range config.ConfigSystem.ConsecutiveSuccess {
-				go func(backend string, m *config.BackendMetrics) {
-					defer wg.Done()
+				resp, err := client.Get(url)
+				if err != nil {
+					return
+				}
+				defer resp.Body.Close()
 
-					url := backend + m.HealthPath
-					resp, err := client.Get(url)
-					if err != nil {
-						return
-					}
-					defer resp.Body.Close()
-
-					if (resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusAccepted) && m.Metrics.TimeoutRate <= config.ConfigSystem.TimeOutRate {
-						config.MetricsMap[backend].Mutex.Lock()
-						config.MetricsMap[backend].Metrics.ConsecutiveSuccess++
-						config.MetricsMap[backend].Mutex.Unlock()
-						UpdateBackendRecovering(backend)
-					}
-				}(backend, m)
-			}
-			wg.Wait()
+				if resp.StatusCode == 200 && m.Metrics.TimeoutRate <= config.ConfigSystem.TimeOutRate {
+					m.Mutex.Lock()
+					config.MetricsMap[backend].Metrics.ConsecutiveSuccess++
+					m.Mutex.Unlock()
+					UpdateBackendRecovering(backend)
+				}
+			}(backend, m)
 		}
 	}
 }

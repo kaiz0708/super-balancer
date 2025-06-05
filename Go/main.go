@@ -14,38 +14,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-<<<<<<< HEAD
-func setupDefaultValues(cfg *config.Config) {
-	if cfg.ConsecutiveFails == 0 {
-		cfg.ConsecutiveFails = config.DefaultConsecutiveFails
-	}
-	if cfg.ConsecutiveSuccess == 0 {
-		cfg.ConsecutiveSuccess = config.DefaultConsecutiveSuccess
-	}
-	if cfg.FailRate == 0 {
-		cfg.FailRate = config.DefaultFailRate
-	}
-	if cfg.TimeOutRate == 0 {
-		cfg.TimeOutRate = config.DefaultTimeOutRate
-	}
-	if cfg.TimeOutDelay == 0 {
-		cfg.TimeOutDelay = config.DefaultTimeOutDelay
-	}
-	if cfg.HealthCheckInterval <= 0 {
-		cfg.HealthCheckInterval = config.DefaultHealthCheckInterval
-	}
-	if cfg.RateLimit <= 0 {
-		cfg.RateLimit = config.DefaultRateLimit
-	}
-	for i := range cfg.Servers {
-		if cfg.Servers[i].WeightConfig == 0 {
-			cfg.Servers[i].WeightConfig = config.DefaultWeight
-		}
-	}
-}
-
-=======
->>>>>>> bo_dev
 func main() {
 	configFile := "config.yaml"
 	if envConfig := os.Getenv("CONFIG_FILE"); envConfig != "" {

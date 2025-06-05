@@ -11,6 +11,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -36,24 +37,13 @@ func CheckUnhealthyBackend() {
 
 	for backend, m := range config.MetricsMap {
 		if !m.Metrics.IsHealthy && m.HealthPath != "" {
-			go func(backend string, m *config.BackendMetrics) {
-				url := backend + m.HealthPath
+			var wg sync.WaitGroup
 
-				resp, err := client.Get(url)
-				if err != nil {
-					return
-				}
-				defer resp.Body.Close()
+			wg.Add(int(config.ConfigSystem.ConsecutiveSuccess))
+			for range config.ConfigSystem.ConsecutiveSuccess {
+				go func(backend string, m *config.BackendMetrics) {
+					defer wg.Done()
 
-<<<<<<< HEAD
-				if resp.StatusCode == 200 && m.Metrics.TimeoutRate <= config.ConfigSystem.TimeOutRate {
-					m.Mutex.Lock()
-					config.MetricsMap[backend].Metrics.ConsecutiveSuccess++
-					m.Mutex.Unlock()
-					UpdateBackendRecovering(backend)
-				}
-			}(backend, m)
-=======
 					url := backend + m.HealthPath
 					resp, err := client.Get(url)
 					if err != nil {
@@ -70,7 +60,6 @@ func CheckUnhealthyBackend() {
 				}(backend, m)
 			}
 			wg.Wait()
->>>>>>> bo_dev
 		}
 	}
 }

@@ -14,6 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+<<<<<<< HEAD
 func setupDefaultValues(cfg *config.Config) {
 	if cfg.ConsecutiveFails == 0 {
 		cfg.ConsecutiveFails = config.DefaultConsecutiveFails
@@ -43,6 +44,8 @@ func setupDefaultValues(cfg *config.Config) {
 	}
 }
 
+=======
+>>>>>>> bo_dev
 func main() {
 	configFile := "config.yaml"
 	if envConfig := os.Getenv("CONFIG_FILE"); envConfig != "" {
@@ -61,13 +64,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if cfg.Algorithm == "" || len(cfg.Servers) == 0 {
+	if cfg.Algorithm == "" || len(cfg.Servers) == 0 || (cfg.AuthBasic.Username == "" || cfg.AuthBasic.Password == "") {
 		fmt.Println("Missing required configuration fields")
 		os.Exit(1)
 	}
 
-	setupDefaultValues(&cfg)
-
+	config.SetupDefaultValues(&cfg)
 	config.ConfigSystem.Servers = make([]config.BackendConfig, len(cfg.Servers))
 	for i, b := range cfg.Servers {
 		config.ConfigSystem.Servers[i] = config.BackendConfig{

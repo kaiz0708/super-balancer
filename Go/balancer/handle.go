@@ -45,6 +45,7 @@ func CheckUnhealthyBackend() {
 				}
 				defer resp.Body.Close()
 
+<<<<<<< HEAD
 				if resp.StatusCode == 200 && m.Metrics.TimeoutRate <= config.ConfigSystem.TimeOutRate {
 					m.Mutex.Lock()
 					config.MetricsMap[backend].Metrics.ConsecutiveSuccess++
@@ -52,6 +53,24 @@ func CheckUnhealthyBackend() {
 					UpdateBackendRecovering(backend)
 				}
 			}(backend, m)
+=======
+					url := backend + m.HealthPath
+					resp, err := client.Get(url)
+					if err != nil {
+						return
+					}
+					defer resp.Body.Close()
+
+					if (resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusAccepted) && m.Metrics.TimeoutRate < config.ConfigSystem.TimeOutRate {
+						config.MetricsMap[backend].Mutex.Lock()
+						config.MetricsMap[backend].Metrics.ConsecutiveSuccess++
+						config.MetricsMap[backend].Mutex.Unlock()
+						UpdateBackendRecovering(backend)
+					}
+				}(backend, m)
+			}
+			wg.Wait()
+>>>>>>> bo_dev
 		}
 	}
 }

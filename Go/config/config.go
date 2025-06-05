@@ -108,6 +108,32 @@ func InitDefaultConfig() {
 	}
 }
 
+func SetupDefaultValues(cfg *Config) {
+	if cfg.ConsecutiveFails == 0 {
+		cfg.ConsecutiveFails = DefaultConsecutiveFails
+	}
+	if cfg.ConsecutiveSuccess == 0 {
+		cfg.ConsecutiveSuccess = DefaultConsecutiveSuccess
+	}
+	if cfg.FailRate == 0 {
+		cfg.FailRate = DefaultFailRate
+	}
+	if cfg.TimeOutRate == 0 {
+		cfg.TimeOutRate = DefaultTimeOutRate
+	}
+	if cfg.TimeOutDelay == 0 {
+		cfg.TimeOutDelay = DefaultTimeOutDelay
+	}
+	if cfg.RateLimit <= 0 {
+		cfg.RateLimit = DefaultRateLimit
+	}
+	for i := range cfg.Servers {
+		if cfg.Servers[i].WeightConfig == 0 {
+			cfg.Servers[i].WeightConfig = DefaultWeight
+		}
+	}
+}
+
 func InitServer() {
 	ConfigDefaultSystem.StateSystem = Stable
 	urls := ConfigSystem.Servers

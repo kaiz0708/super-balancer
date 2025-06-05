@@ -51,7 +51,7 @@ func CheckUnhealthyBackend() {
 					}
 					defer resp.Body.Close()
 
-					if (resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusAccepted) && m.Metrics.TimeoutRate <= config.ConfigSystem.TimeOutRate {
+					if (resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusAccepted) && m.Metrics.TimeoutRate < config.ConfigSystem.TimeOutRate {
 						config.MetricsMap[backend].Mutex.Lock()
 						config.MetricsMap[backend].Metrics.ConsecutiveSuccess++
 						config.MetricsMap[backend].Mutex.Unlock()

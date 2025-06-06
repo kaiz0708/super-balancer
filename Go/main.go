@@ -60,11 +60,12 @@ func main() {
 		Username: cfg.AuthBasic.Username,
 		Password: cfg.AuthBasic.Password,
 	}
+	config.ConfigSystem.HealthCheckInterval = cfg.HealthCheckInterval
 	config.ConfigSystem.RateLimit = cfg.RateLimit
 
 	config.NewDB(config.GetExecutableDir())
 	config.InitServer()
-	balancer.StartHealthCheck(time.Duration(config.DefaultHealthCheckInterval) * time.Second)
+	balancer.StartHealthCheck(time.Duration(config.ConfigSystem.HealthCheckInterval) * time.Second)
 	rateLimiter := middleware.NewRateLimiter(cfg.RateLimit)
 	corsMiddleware := middleware.NewCORSMiddleware()
 	factory.Factory = *factory.NewLoadBalancerFactory()

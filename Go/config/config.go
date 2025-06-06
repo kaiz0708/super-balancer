@@ -59,16 +59,17 @@ type BackendMetrics struct {
 }
 
 type Config struct {
-	Algorithm          string          `yaml:"algorithm"`
-	Servers            []BackendConfig `yaml:"backends"`
-	ConsecutiveFails   uint64          `yaml:"consecutiveFails"`
-	ConsecutiveSuccess uint64          `yaml:"consecutiveSuccess"`
-	FailRate           float64         `yaml:"failRate"`
-	TimeOutRate        uint64          `yaml:"timeOutRate"`
-	TimeOutDelay       uint64          `yaml:"timeOutDelay"`
-	AuthBasic          AuthConfig      `yaml:"auth"`
-	SmartMode          bool            `yaml:"smartMode"`
-	RateLimit          int64           `yaml:"rateLimit"`
+	Algorithm           string          `yaml:"algorithm"`
+	Servers             []BackendConfig `yaml:"backends"`
+	ConsecutiveFails    uint64          `yaml:"consecutiveFails"`
+	ConsecutiveSuccess  uint64          `yaml:"consecutiveSuccess"`
+	FailRate            float64         `yaml:"failRate"`
+	TimeOutRate         uint64          `yaml:"timeOutBreak"`
+	TimeOutDelay        uint64          `yaml:"timeOutDelay"`
+	AuthBasic           AuthConfig      `yaml:"auth"`
+	SmartMode           bool            `yaml:"smartMode"`
+	RateLimit           int64           `yaml:"rateLimit"`
+	HealthCheckInterval int             `yaml:"healthCheckInterval"`
 }
 
 type DefaultSystem struct {
@@ -96,13 +97,14 @@ var ConfigDefaultSystem DefaultSystem
 
 func InitDefaultConfig() {
 	ConfigSystem = Config{
-		ConsecutiveFails:   DefaultConsecutiveFails,
-		ConsecutiveSuccess: DefaultConsecutiveSuccess,
-		FailRate:           DefaultFailRate,
-		TimeOutRate:        DefaultTimeOutRate,
-		TimeOutDelay:       DefaultTimeOutDelay,
-		RateLimit:          DefaultRateLimit,
-		SmartMode:          false,
+		ConsecutiveFails:    DefaultConsecutiveFails,
+		ConsecutiveSuccess:  DefaultConsecutiveSuccess,
+		FailRate:            DefaultFailRate,
+		TimeOutRate:         DefaultTimeOutRate,
+		TimeOutDelay:        DefaultTimeOutDelay,
+		HealthCheckInterval: DefaultHealthCheckInterval,
+		RateLimit:           DefaultRateLimit,
+		SmartMode:           false,
 	}
 }
 

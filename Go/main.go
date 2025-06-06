@@ -65,7 +65,7 @@ func main() {
 
 	config.NewDB(config.GetExecutableDir())
 	config.InitServer()
-	balancer.StartHealthCheck(time.Duration(config.ConfigSystem.HealthCheckInterval) * time.Second)
+	balancer.StartHealthCheck(time.Duration(config.DefaultHealthCheckInterval) * time.Second)
 	rateLimiter := middleware.NewRateLimiter(cfg.RateLimit)
 	corsMiddleware := middleware.NewCORSMiddleware()
 	factory.Factory = *factory.NewLoadBalancerFactory()

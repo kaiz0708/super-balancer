@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"Go/utils"
+	"encoding/json"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -39,9 +41,15 @@ func (rl *RateLimiter) HandleRateLimit(next http.Handler) http.Handler {
 			rl.requests[clientIP] = validRequests
 		}
 
-		if int64(len(rl.requests[clientIP])) >= rl.requestsPerSecond {
+		if int64(len(rl.requests[clientIP])) > rl.requestsPerSecond {
 			rl.mu.Unlock()
-			http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+			log.Println("Rate limit exceeded")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusTooManyRequests)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error":   "Rate limit exceeded",
+				"message": "Too many requests, please try again later",
+			})
 			return
 		}
 

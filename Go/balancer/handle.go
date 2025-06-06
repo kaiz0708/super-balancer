@@ -26,6 +26,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		config.ConfigDefaultSystem.ActiveLogin = true
 		http.Redirect(w, r, "/metrics", http.StatusSeeOther)
 	} else {
+		log.Println("Invalid credentials")
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 	}
 }

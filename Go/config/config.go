@@ -24,12 +24,12 @@ const (
 	Stable                      = "Stable"
 	ErrorConnectionRefused      = "connection refused"
 	ErrorNoSuchHost             = "no such host"
-	DefaultConsecutiveFails     = 100
-	DefaultConsecutiveSuccess   = 100
-	DefaultFailRate             = 0.5
-	DefaultTimeOutRate          = 100
-	DefaultTimeOutDelay         = 5000
-	DefaultHealthCheckInterval  = 30
+	DefaultConsecutiveFails     = 10
+	DefaultConsecutiveSuccess   = 10
+	DefaultFailRate             = 0.1
+	DefaultTimeOutRate          = 10
+	DefaultTimeOutDelay         = 5
+	DefaultHealthCheckInterval  = 1
 	DefaultRateLimit            = 100
 	DefaultWeight               = 1
 )
@@ -124,7 +124,7 @@ func SetupDefaultValues(cfg *Config) {
 	if cfg.TimeOutDelay == 0 {
 		cfg.TimeOutDelay = DefaultTimeOutDelay
 	}
-	if cfg.RateLimit <= 0 {
+	if cfg.RateLimit == 0 {
 		cfg.RateLimit = DefaultRateLimit
 	}
 	for i := range cfg.Servers {

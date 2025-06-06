@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -235,6 +234,7 @@
                     updateErrorHistory();
                     deleteSelectedButton.style.display = 'none';
                     selectAllCheckbox.checked = false;
+                    alert('Delete list state history successfully');
                 } else {
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Failed to delete error history');
@@ -302,6 +302,7 @@
                 });
 
                 if (response.ok) {
+                    alert('Delete state history successfully');
                     updateErrorHistory();
                 } else {
                     const errorData = await response.json();
@@ -323,59 +324,58 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer your-secret-token'
                     },
-                    body: JSON.stringify({
-                        backend_id: backendId
-                    })
+                    body: JSON.stringify({ backend_id: backendId })
                 });
 
+                if (handleRateLimitError(response)) return;
+
                 if (response.ok) {
+                    alert('Reset metrics successfully');
                     location.reload();
                 } else {
-                    throw new Error('Failed to reset metrics');
+                    alert('Failed to reset metrics');
                 }
             } catch (error) {
-                console.error('Error resetting metrics:', error);
-                alert('Failed to reset metrics');
+                console.error('Error:', error);
+                alert('An error occurred while resetting metrics');
             }
         }
 
-        document.getElementById('change-algorithm-form').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            
-            const selectElement = this.querySelector('select[name="name"]');
-            const algorithm = selectElement.value;
-            const feedbackMessage = document.getElementById('feedback-message');
+        document.getElementById('change-algorithm-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const select = this.querySelector('select[name="name"]');
+            const algorithm = select.value;
 
             try {
-                const response = await fetch('/change-load-balancer?name=' + encodeURIComponent(algorithm), {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer your-secret-token'
-                    },
+                const response = await fetch(`/change-load-balancer?name=${algorithm}`, {
+                    method: 'GET'
                 });
 
+                if (handleRateLimitError(response)) return;
+
                 if (response.ok) {
-                    const result = await response.json();
-                    feedbackMessage.textContent = 'Successfully changed to ' + result + ' algorithm';
-                    feedbackMessage.classList.remove('bg-red-500', 'text-white');
-                    feedbackMessage.classList.add('bg-green-500', 'text-white');
+                    location.reload();
+                    alert("Change algorithm successfully")
                 } else {
-                    throw new Error('Failed to change algorithm');
+                    alert('Failed to change algorithm');
                 }
             } catch (error) {
-                feedbackMessage.textContent = 'Error: ' + error.message;
-                feedbackMessage.classList.remove('bg-green-500', 'text-white');
-                feedbackMessage.classList.add('bg-red-500', 'text-white');
+                console.error('Error:', error);
+                alert('An error occurred while changing algorithm');
             }
-
-            feedbackMessage.classList.remove('hidden');
-            setTimeout(() => {
-                feedbackMessage.classList.add('hidden');
-            }, 3000);
         });
+
+        // Add rate limit error handling
+        function handleRateLimitError(response) {
+            if (response.status === 429) {
+                response.json().then(data => {
+                    alert(data.message || 'Rate limit exceeded. Please try again later.');
+                });
+                return true;
+            }
+            return false;
+        }
     </script>
 </body>
 </html>

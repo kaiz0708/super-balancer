@@ -64,7 +64,7 @@ type Config struct {
 	ConsecutiveFails   uint64          `yaml:"consecutiveFails"`
 	ConsecutiveSuccess uint64          `yaml:"consecutiveSuccess"`
 	FailRate           float64         `yaml:"failRate"`
-	TimeOutRate        uint64          `yaml:"timeOutBreak"`
+	TimeOutRate        uint64          `yaml:"timeOutRate"`
 	TimeOutDelay       uint64          `yaml:"timeOutDelay"`
 	AuthBasic          AuthConfig      `yaml:"auth"`
 	SmartMode          bool            `yaml:"smartMode"`

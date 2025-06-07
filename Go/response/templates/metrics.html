@@ -219,7 +219,7 @@
             }
 
             try {
-                const response = await fetch('/delete-error-history', {
+                const response = await fetch('/delete-state-history', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -247,7 +247,7 @@
 
         async function updateErrorHistory() {
             try {
-                const response = await fetch('/error-history', {
+                const response = await fetch('/state-history', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

@@ -41,7 +41,7 @@ func (rl *RateLimiter) HandleRateLimit(next http.Handler) http.Handler {
 			rl.requests[clientIP] = validRequests
 		}
 
-		if int64(len(rl.requests[clientIP])) > rl.requestsPerSecond {
+		if int64(len(rl.requests[clientIP])) >= rl.requestsPerSecond {
 			rl.mu.Unlock()
 			log.Println("Rate limit exceeded")
 			w.Header().Set("Content-Type", "application/json")
